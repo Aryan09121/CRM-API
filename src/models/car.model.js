@@ -45,7 +45,7 @@ const carSchema = new Schema(
 			},
 			date: {
 				type: Number,
-				min: [0, "Rate should not be 0"]
+				min: [0, "Rate should not be 0"],
 			},
 		},
 		start: {
@@ -102,8 +102,8 @@ const carSchema = new Schema(
 				amount: {
 					type: Number,
 					required: [true, "Amount is required"],
-				}
-			}
+				},
+			},
 		],
 		district: {
 			type: String,
@@ -118,8 +118,7 @@ const carSchema = new Schema(
 );
 
 
-
-const Car = mongoose.model("car", carSchema);
+const Car = mongoose.model("Car", carSchema);
 module.exports = Car;
 
 
