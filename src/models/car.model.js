@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 // car Schema
 const carSchema = new Schema(
 	{
-		registrationno: {
+		registrationNo: {
 			type: String,
 			required: [true, "registration Number is required"],
 			minLength: [9, "Registration Number should be 9 characters long"],
@@ -24,9 +24,29 @@ const carSchema = new Schema(
 			required: [true, "FRV Code is required"],
 		},
 		features: {
-			capacity: Number,
-			type: String,
-			speed: Number,
+			capacity: {
+				type: Number,
+				required: [true, "Capacity is required"],
+				min: [1, "Capacity should not be less than 1"],
+			},
+			type: {
+				type: String,
+				enum: ["AC", "NON-AC"],
+			},
+			maxSpeed: {
+				type: Number,
+				required: [true, "Speed is required"],
+			},
+		},
+		rate:{
+			km: {
+				type: Number,
+				min: [0, "Rate should not be 0"],
+			},
+			date: {
+				type: Number,
+				min:[0, "Rate should not be 0"]
+			},
 		},
 		start: {
 			km: {
@@ -68,6 +88,26 @@ const carSchema = new Schema(
 					message: "End date should not be in the future and should not be less than start date",
 				},
 			},
+		},
+		maintenance:[
+			{
+				year:{
+					type: Number,
+					required: [true, "Year is required"],
+				},
+				month:{
+					type: Number,
+					required: [true, "Month is required"],
+				},
+				amount:{
+					type: Number,
+					required: [true, "Amount is required"],
+				}
+			}
+		],
+		district:{
+			type: String,
+			required: [true, "District is required"],
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
