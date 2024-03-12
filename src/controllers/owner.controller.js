@@ -1,7 +1,6 @@
-const { asyncHandler } = require("../utils/asyncHandler.js");
 const { ApiError } = require("../utils/ApiError.js");
 const Owner = require("../models/owner.model");
-const Car = require("../models/car.model.js");
+// const Car = require("../models/car.model.js");
 // const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
@@ -19,7 +18,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const isOwnerExists = await Owner.findOne({ name, email, contact });
 	console.log(isOwnerExists);
 	if (isOwnerExists) {
-		throw new ApiError(409, "User with email or username already exists");
+		throw new ApiError(409, "User with given credentials already exists");
 	}
 
 	const owner = await Owner.create({
@@ -43,12 +42,26 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	return res.status(200).json(new ApiResponse(200, createdOwner, "Owner Added Successfully"));
 });
 
-// ?? Get Owner Details MiddleWares
+// ?? Get Single Owner MiddleWares
 exports.getOwnerById = catchAsyncErrors(async (req, res) => {
-	const owner = await Owner.findById(req.params.id);
-	if (owner) {
+	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
+	const owner = await Owner.findById(req.query.id);
+	console.log(req.query.id);
+	if (!owner) {
 		throw new ApiError(400, "Owner Details not Found");
 	}
+	return res.status(200).json(new ApiResponse(200, owner, "Owner Details Fetched Successfully"));
+});
+
+// ?? Get All Owner MiddleWares
+exports.getOwners = catchAsyncErrors(async (req, res) => {
+	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
+	const owners = await Owner.find();
+	console.log(req.query.id);
+	if (!owners) {
+		throw new ApiError(400, "Owners not Found");
+	}
+	return res.status(200).json(new ApiResponse(200, owners, "Owner Details Fetched Successfully"));
 });
 
 // ?? Get Owners Avatar
