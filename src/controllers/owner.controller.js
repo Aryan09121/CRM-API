@@ -7,6 +7,9 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const path = require("path");
 const imagekit = require("../utils/imagekit.js").initImageKit();
 
+
+// Assuming ownerId is the ObjectId of the owner
+
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const { name, contact, gender, email, address, hsn, pan, joinedDate, cars } = req.body;
