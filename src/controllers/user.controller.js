@@ -1,6 +1,5 @@
 const User = require("../models/user.model");
 const { ApiError } = require("../utils/ApiError.js");
-// const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
