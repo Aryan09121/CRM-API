@@ -53,8 +53,16 @@ const ownerSchema = new Schema(
 			twiiter: String,
 			instagram: String,
 		},
-		hsn: String,
-		pan: String,
+		hsn: {
+			type: String,
+			unique: true,
+			required: true,
+		},
+		pan: {
+			type: String,
+			unique: true,
+			required: true,
+		},
 		joinedDate: {
 			type: Date,
 			default: Date.now, // Set the default value to the current date and time
