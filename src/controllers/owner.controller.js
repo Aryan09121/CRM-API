@@ -4,9 +4,10 @@ const Owner = require("../models/owner.model");
 const Car = require("../models/car.model.js");
 // const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
+const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 // ?? Add New Owner Handler
-exports.addNewOwner = asyncHandler(async (req, res) => {
+exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const { name, contact, gender, email, address, hsn, pan, joinedDate, cars } = req.body;
 
 	if ([name, email, contact, gender, hsn, pan].some((field) => field?.trim() === "")) {
@@ -41,7 +42,7 @@ exports.addNewOwner = asyncHandler(async (req, res) => {
 });
 
 // ?? Get Owner Details MiddleWares
-exports.getOwnerById = asyncHandler(async (req, res) => {
+exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 	const owner = await Owner.findById(req.params.id);
 	if (owner) {
 		throw new ApiError(400, "Owner Details not Found");

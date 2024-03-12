@@ -1,9 +1,9 @@
 const { ApiError } = require("../utils/ApiError.js");
-const { asyncHandler } = require("../utils/asyncHandler.js");
+const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model.js");
 
-exports.authUser = asyncHandler(async (req, res, next) => {
+exports.authUser = catchAsyncErrors(async (req, res, next) => {
 	try {
 		const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
 

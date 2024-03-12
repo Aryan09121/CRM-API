@@ -1,11 +1,11 @@
 const User = require("../models/user.model");
-const { asyncHandler } = require("../utils/asyncHandler.js");
 const { ApiError } = require("../utils/ApiError.js");
 // const { uploadOnCloudinary } = require("../utils/cloudinary.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
+const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 // ?? Admin Register Handler
-exports.registerUser = asyncHandler(async (req, res) => {
+exports.registerUser = catchAsyncErrors(async (req, res) => {
 	const { name, email, contact, password, gender, role } = req.body;
 	if ([name, email, contact, password, gender].some((field) => field?.trim() === "")) {
 		throw new ApiError(400, "All fields are required");
@@ -38,7 +38,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 });
 
 // ?? Admin Login Handler
-exports.loginAdmin = asyncHandler(async (req, res) => {
+exports.loginAdmin = catchAsyncErrors(async (req, res) => {
 	const { email, password, contact } = req.body;
 	if ((!email || !contact) && !password) {
 		throw new ApiError(400, "phone number or email and password is required is required");
@@ -51,7 +51,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 		throw new ApiError(404, "User does not exist");
 	}
 
-	const isPasswordValid = user.comparePassword(password);
+	const isPasswordValid = await user.comparePassword(password);
 
 	if (!isPasswordValid) {
 		throw new ApiError(401, "Invalid user credentials");
@@ -82,7 +82,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 });
 
 // ?? Admin Logout Handler
-exports.logoutUser = asyncHandler(async (req, res) => {
+exports.logoutUser = catchAsyncErrors(async (req, res) => {
 	res.status(200)
 		.cookie("token", null, { expires: new Date(Date.now()), httpOnly: true })
 		.json(new ApiResponse(200, "Admin Logged Out Successfully"));
