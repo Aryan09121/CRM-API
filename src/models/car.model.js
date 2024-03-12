@@ -38,14 +38,14 @@ const carSchema = new Schema(
 				required: [true, "Speed is required"],
 			},
 		},
-		rate:{
+		rate: {
 			km: {
 				type: Number,
 				min: [0, "Rate should not be 0"],
 			},
 			date: {
 				type: Number,
-				min:[0, "Rate should not be 0"]
+				min: [0, "Rate should not be 0"],
 			},
 		},
 		start: {
@@ -89,23 +89,23 @@ const carSchema = new Schema(
 				},
 			},
 		},
-		maintenance:[
+		maintenance: [
 			{
-				year:{
+				year: {
 					type: Number,
 					required: [true, "Year is required"],
 				},
-				month:{
+				month: {
 					type: Number,
 					required: [true, "Month is required"],
 				},
-				amount:{
+				amount: {
 					type: Number,
 					required: [true, "Amount is required"],
-				}
-			}
+				},
+			},
 		],
-		district:{
+		district: {
 			type: String,
 			required: [true, "District is required"],
 		},
@@ -117,5 +117,5 @@ const carSchema = new Schema(
 	{ timestamps: true }
 );
 
-const Car = mongoose.model("car", carSchema);
+const Car = mongoose.model("Car", carSchema);
 module.exports = Car;
