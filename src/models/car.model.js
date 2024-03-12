@@ -38,11 +38,6 @@ const carSchema = new Schema(
 				required: [true, "Speed is required"],
 			},
 		},
-		qty:{
-			type: Number,
-			required: [true, "Quantity is required"],
-			min: [1, "Quantity should not be less than 1"],
-		},
 		rate:{
 			km: {
 				type: Number,
@@ -94,10 +89,6 @@ const carSchema = new Schema(
 				},
 			},
 		},
-		owner: {
-			type: Schema.Types.ObjectId,
-			ref: "Owner", // This should match the model name of your owner schema
-		},
 		maintenance:[
 			{
 				year:{
@@ -117,6 +108,10 @@ const carSchema = new Schema(
 		district:{
 			type: String,
 			required: [true, "District is required"],
+		},
+		owner: {
+			type: Schema.Types.ObjectId,
+			ref: "Owner", // This should match the model name of your owner schema
 		},
 	},
 	{ timestamps: true }

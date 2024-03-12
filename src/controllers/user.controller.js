@@ -1,11 +1,15 @@
 const User = require("../models/user.model");
+const Car = require("../models/car.model.js");
+
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 // ?? Admin Register Handler
 exports.registerUser = catchAsyncErrors(async (req, res) => {
-	const { name, email, contact, password, gender, role } = req.body;
+	const { name, email, contact, password, gender, role, cars  } = req.body;
+	console.log(req.body);
+
 	if ([name, email, contact, password, gender].some((field) => field?.trim() === "")) {
 		throw new ApiError(400, "All fields are required");
 	}
@@ -29,9 +33,37 @@ exports.registerUser = catchAsyncErrors(async (req, res) => {
 
 	const createdUser = await User.findById(user._id).select("-password");
 
+
+
 	if (!createdUser) {
 		throw new ApiError(500, "Something went wrong while registering the user");
 	}
+
+	cars.map(async (car)=>{
+		const {registrationNo, brand,model,frvcode,features,rate} = car;
+		const {capacity,type} = features;
+		const {km,date} = rate;
+		console.log(cars);
+		// if ({registrationNo, brand,model,frvcode,capacity,type,km,date}.some((field) => field.toString()?.trim() === "")) {
+		// 	throw new ApiError(400, "All fields are required");
+		// }
+
+		const isCarsCreated = await Car.create({
+			registrationNo, 
+			brand,model,
+			frvcode,
+			capacity,
+			type,
+			km,
+			date
+		});
+
+		if(!isCarsCreated){
+			throw new ApiError(500, "Something went wrong while registering the car");
+		}
+	})
+
+	
 
 	return res.status(201).json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
