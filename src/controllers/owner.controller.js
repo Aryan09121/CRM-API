@@ -8,8 +8,6 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const path = require("path");
 const imagekit = require("../utils/imagekit.js").initImageKit();
 
-
-
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const { name, contact, gender, email, address, hsn, pan, joinedDate } = req.body;
@@ -200,6 +198,7 @@ exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 			// 	}
 			// }],
         });
+		
 
         // Respond with success message
         res.status(200).json({ success: true, message: 'Profile Updated', url: result.url});
