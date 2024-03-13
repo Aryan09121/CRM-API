@@ -19,10 +19,10 @@ exports.getSingleCar = catchAsyncErrors(async (req, res) => {
 	if (!car) {
 		throw new ApiError(404, "Car Not Found");
 	}
-	const ObjectId = car.owner.toString();
-	console.log(ObjectId);
-	const carOwner = await Owner.findById(ObjectId);
-	console.log(carOwner);
+	// const ObjectId = car.owner.toString();
+	// console.log(ObjectId);
+	// const carOwner = await Owner.findById(ObjectId);
+	// console.log(carOwner);
 	res.status(200).json(new ApiResponse(200, car, "car fetched successfully"));
 });
 
