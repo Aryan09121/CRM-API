@@ -24,12 +24,14 @@ const userRouter = require("./routes/user.routes.js");
 const ownerRouter = require("./routes/owner.routes.js");
 const carRouter = require("./routes/car.routes.js");
 const driverRouter = require("./routes/driver.routes.js");
+const tripRouter = require("./routes/trip.routes.js");
 
 //routes declare
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", ownerRouter);
 app.use("/api/v1/admin", carRouter);
 app.use("/api/v1/admin", driverRouter);
+app.use("/api/v1/admin", tripRouter);
 
 app.all("*", (req, res, next) => {
 	next(new ApiError(404, `Requested URL Not Found ${req.url}`));
