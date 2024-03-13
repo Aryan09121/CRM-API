@@ -28,31 +28,23 @@ const driverSchema = new Schema(
 			reqired: [true, "Email is required"],
 			match: [/^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/, "Please fill a valid email address"],
 		},
-        // tripCompleted:{
-        //     type: Number,
-        //     default: 0,
-        // },
-        // totalKilomer:{
-        //     type: Number,
-        //     default: 0,
-        // },
-        accidentHistory:{
-            type:Number,
-            default:0,
-        },
-        status : {
-            type: String,
-            enum: ["available", "completed", "ongoing"],
-            default: "available",
+		accidentHistory: {
+			type: Number,
+			default: 0,
+		},
+		status: {
+			type: String,
+			enum: ["available", "completed", "ongoing"],
+			default: "available",
 			// required: [true, "Status is required"],
-        },
-        cars: [
+		},
+		cars: [
 			{
 				type: Schema.Types.ObjectId,
 				ref: "Car",
 			},
 		],
-        trips: [
+		trips: [
 			{
 				type: Schema.Types.ObjectId,
 				ref: "Trip",
