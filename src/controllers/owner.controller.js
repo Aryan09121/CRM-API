@@ -2,10 +2,13 @@ const { ApiError } = require("../utils/ApiError.js");
 const Owner = require("../models/owner.model");
 const Car = require("../models/car.model.js");
 // const { uploadOnCloudinary } = require("../utils/cloudinary.js");
+const multer = require('multer');
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
-// const path = require("path");
-// const imagekit = require("../utils/imagekit.js").initImageKit();
+const path = require("path");
+const imagekit = require("../utils/imagekit.js").initImageKit();
+
+
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
@@ -87,22 +90,74 @@ exports.getOwners = catchAsyncErrors(async (req, res) => {
 
 // ?? Post Owners Avatar
 // exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
-//     const owner = await Owner.findById(req.params.id).exec();
-//     const file = req.files.avatar;
-//     const modifiedFileName = `resumebuilder=${Date.now}${path.extname(file.name)}`;
+// 	try {
+// 		console.log(req)
+// 		const modifiedFileName = `resumebuilder=${Date.now}${path.extname(req.file.name)}`;
+// 		const result = await imagekit.upload({
+// 			file: req.file.path, // path to the uploaded file
+// 			fileName: modifiedFileName, // original file name
+// 		});
+// 		res.status(200).json({ success: true, message: "Profile Updated", });
+// 	} catch (error) {
+// 		console.error(error);
+// 		res.status(500).send('Error uploading image to ImageKit');
+// 	}
+// 	// const file = req.files.avatar;
+// 	// const file = req.body.avatar
 
-//     if (student.avatar.fileId !== "") {
-//         await imagekit.deleteFile(student.avatar.fileId)
-//     }
+// 	// if (student.avatar.fileId !== "") {
+// 	//     await imagekit.deleteFile(student.avatar.fileId)
+// 	// }
 
-//     const { fileId, url } = await imagekit.upload({
-//         file: file.data, fileName: modifiedFileName,
-//     })
+// 	// const { fileId, url } = await imagekit.upload({
+// 	//     file: file.data, fileName: modifiedFileName,
+// 	// })
 
-//     student.avatar = { fileId, url };
-//     await student.save()
-//     res.status(200).json({
-//         success: true,
-//         message: "Profile Updated",
-//     });
+// 	// student.avatar = { fileId, url };
+// 	// await student.save()
+// 	// res.status(200).json({
+// 	//     success: true,
+// 	//     message: "Profile Updated",
+// 	// });
 // })
+
+exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
+	
+    try {
+		console.log(req?.file);
+
+        // Ensure req.file exists and has the necessary information
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+
+        // Generate a modified filename
+        const modifiedFileName = `resumebuilder-${Date.now()}${path.extname(req.file.originalname)}`;
+        // Upload the file to ImageKit
+		
+        const result = await imagekit.upload({
+            file: req.file.path, // path to the uploaded file
+            fileName: modifiedFileName, // modified file name
+			// transformation: [{
+			// 	post: {
+			// 		height: 300, // height of the transformed image
+			// 		width: 300, // width of the transformed image
+			// 		quality: 90 // quality of the transformed image (0 to 100)
+			// 		// additional post-upload transformation parameters can be added here
+			// 	},
+			// 	pre: {
+			// 		height: 300, // height of the transformed image
+			// 		width: 300, // width of the transformed image
+			// 		quality: 90 // quality of the transformed image (0 to 100)
+			// 		// additional post-upload transformation parameters can be added here
+			// 	}
+			// }],
+        });
+
+        // Respond with success message
+        res.status(200).json({ success: true, message: 'Profile Updated', url: result.url});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error uploading image to ImageKit' });
+    }
+});
