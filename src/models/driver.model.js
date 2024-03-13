@@ -34,7 +34,7 @@ const driverSchema = new Schema(
 		},
 		status: {
 			type: String,
-			enum: ["available", "completed", "ongoing"],
+			enum: ["available", "onleave", "ontrip"],
 			default: "available",
 			// required: [true, "Status is required"],
 		},
@@ -46,8 +46,15 @@ const driverSchema = new Schema(
 		],
 		trips: [
 			{
-				type: Schema.Types.ObjectId,
-				ref: "Trip",
+				status: {
+					type: String,
+					enum: ["ongoing", "completed"],
+					default: "ongoing",
+				},
+				trip: {
+					type: Schema.Types.ObjectId,
+					ref: "Trip",
+				},
 			},
 		],
 	},
