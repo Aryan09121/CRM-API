@@ -32,8 +32,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ?? Admin Routes
-router.route("/owner/:id").get(authUser, getOwnerById);
-router.route("/owner").get(authUser, getOwners);
+router.route("/owners").get(authUser, getOwners);
+router.route("/owner").get(authUser, getOwnerById);
 router.route("/add/owner").post(authUser, addNewOwner);
 
 // router.route("/add/owner/avatar").Upload.single('avatar').post(authUser, onwerAvatar);
