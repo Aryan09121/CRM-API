@@ -93,11 +93,11 @@ const carSchema = new Schema(
 			{
 				year: {
 					type: Number,
-					required: [true, "Year is required"],
+					required: [true, "Year is required (20XX)"],
 				},
 				month: {
 					type: Number,
-					required: [true, "Month is required"],
+					required: [true, "Month is required (1-12)"],
 				},
 				amount: {
 					type: Number,
@@ -111,7 +111,7 @@ const carSchema = new Schema(
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
-			ref: "Owner", // This should match the model name of your owner schema
+			ref: "owner", // This should match the model name of your owner schema
 		},
 	},
 	{ timestamps: true }

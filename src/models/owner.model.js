@@ -85,7 +85,7 @@ const ownerSchema = new Schema(
 		cars: [
 			{
 				type: Schema.Types.ObjectId,
-				ref: "Car",
+				ref: "car",
 			},
 		],
 	},
