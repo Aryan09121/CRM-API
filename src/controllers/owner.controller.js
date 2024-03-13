@@ -88,6 +88,53 @@ exports.getOwners = catchAsyncErrors(async (req, res) => {
 	return res.status(200).json(new ApiResponse(200, owners, "Owner Details Fetched Successfully"));
 });
 
+// ?? update owner
+exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
+	const { name, email, contact, gender, address, socials } = req.body;
+
+	const owner = await Owner.findById(req?.query?.id);
+	console.log(!owner);
+	if (!owner) {
+		throw new ApiError(401, "Owner already exists");
+	}
+
+	if (name) {
+		owner.name = name;
+	}
+	if (email) {
+		owner.email = email;
+	}
+	if (contact) {
+		owner.contact = contact;
+	}
+	if (gender) {
+		owner.gender = gender;
+	}
+	if (address) {
+		owner.address = address;
+	}
+	if (socials) {
+		owner.socials = socials;
+	}
+
+	const updatedOwner = await owner.save();
+
+	// const updatedOwner = await Owner.findByIdAndUpdate(owner._id, {
+	// 	name,
+	// 	email,
+	// 	contact,
+	// 	gender,
+	// 	address,
+	// 	socials,
+	// });
+
+	if (!updatedOwner) {
+		throw new Error(401, "There was some Error while Updating the owner");
+	}
+
+	res.status(201).json(new ApiResponse(201, updatedOwner, "Owner updated successfully"));
+});
+
 // ?? Post Owners Avatar
 // exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 // 	try {

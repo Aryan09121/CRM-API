@@ -4,42 +4,44 @@ const { Schema } = mongoose;
 
 // trip Schema
 const tripSchema = new Schema(
-	{
-		cars: [
-			{
-				type: Schema.Types.ObjectId,
-				ref: "Car",
-			},
-		],
+  {
+    cars: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Car",
+      },
+    ],
 
-		drivers: {
-			type: Schema.Types.ObjectId,
-			ref: "Driver",
-		},
+    drivers: {
+      type: Schema.Types.ObjectId,
+      ref: "Driver",
+    },
 
-		startKm: {
-			type: Number,
-		},
+    startKm: {
+      type: Number,
+    },
 
-		startDate: {
-			type: Number,
-		},
+    startDate: {
+      type: Date,
+      required: true,
+    },
 
-		endingKm: {
-			type: Number,
-		},
+    endingKm: {
+      type: Number,
+    },
 
-		endingDate: {
-			type: Number,
-		},
+    endingDate: {
+      type: Date,
+      required: true,
+    },
 
-		tripStatus: {
-			type: String,
-			enum: ["available", "ongoing", "completed"],
-			default: "avaliable",
-		},
-	},
-	{ timestamps: true }
+    tripStatus: {
+      type: String,
+      enum: ["available", "ongoing", "completed"],
+      default: "avaliable",
+    },
+  },
+  { timestamps: true }
 );
 
 const Trip = mongoose.model("trip", tripSchema);
