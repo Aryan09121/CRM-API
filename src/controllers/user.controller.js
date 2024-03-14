@@ -41,12 +41,12 @@ exports.registerUser = catchAsyncErrors(async (req, res) => {
 
 // ?? Admin Login Handler
 exports.loginAdmin = catchAsyncErrors(async (req, res) => {
-	const { email, password, contact } = req.body;
-	if ((!email || !contact) && !password) {
+	const { username, password } = req.body;
+	if (!username && !password) {
 		throw new ApiError(400, "phone number or email and password is required is required");
 	}
 	const user = await User.findOne({
-		$or: [{ contact }, { email }],
+		$or: [{ email:username }, { contact:username }],
 	}).select("+password");
 
 	if (!user) {
