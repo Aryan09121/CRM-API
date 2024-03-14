@@ -8,22 +8,21 @@ const app = express();
 
 app.use(
 	cors({
-		origin: process.env.CORS_ORIGIN,
+		origin: "*",
 		credentials: true,
 	})
 );
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// models import 
+// models import
 const User = require("./models/user.model.js");
 const Owner = require("./models/owner.model.js");
 const Car = require("./models/car.model.js");
 const Driver = require("./models/driver.model.js");
-
 
 // routes import
 

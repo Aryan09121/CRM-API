@@ -41,12 +41,12 @@ exports.registerUser = catchAsyncErrors(async (req, res) => {
 
 // ?? Admin Login Handler
 exports.loginAdmin = catchAsyncErrors(async (req, res) => {
-	const { email, password, contact } = req.body;
-	if ((!email || !contact) && !password) {
+	const { username, password } = req.body;
+	if (!username || !password) {
 		throw new ApiError(400, "phone number or email and password is required is required");
 	}
 	const user = await User.findOne({
-		$or: [{ contact }, { email }],
+		$or: [{ contact: username }, { email: username }],
 	}).select("+password");
 
 	if (!user) {
@@ -71,16 +71,19 @@ exports.loginAdmin = catchAsyncErrors(async (req, res) => {
 	delete userWithoutPassword.password;
 	delete userWithoutPassword.resetPasswordToken;
 
-	return res.status(200).cookie("token", token, options).json(
-		new ApiResponse(
-			200,
-			{
-				token,
-				userWithoutPassword,
-			},
-			"User logged In Successfully"
-		)
-	);
+	return res
+		.status(200)
+		.cookie("token", token, options)
+		.json(
+			new ApiResponse(
+				200,
+				{
+					token,
+					user: userWithoutPassword,
+				},
+				"User logged In Successfully"
+			)
+		);
 });
 
 // ?? Admin Logout Handler
