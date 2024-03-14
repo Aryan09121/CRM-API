@@ -87,7 +87,7 @@ exports.getOwners = catchAsyncErrors(async (req, res) => {
 });
 
 // ?? update owner
-exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
+exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {	
 	const { name, email, contact, gender, address, socials } = req.body;
 
 	const owner = await Owner.findById(req?.query?.id);
