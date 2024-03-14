@@ -2,7 +2,7 @@ const { ApiError } = require("../utils/ApiError.js");
 const Owner = require("../models/owner.model");
 const Car = require("../models/car.model.js");
 // const { uploadOnCloudinary } = require("../utils/cloudinary.js");
-const multer = require('multer');
+const multer = require("multer");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const path = require("path");
@@ -67,8 +67,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 // ?? Get Single Owner Handler
 exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
-	const owner = await Owner.findById(req.params.id);
-	console.log(req.params.id);
+	const owner = await Owner.findById(req.query.id);
 	if (!owner) {
 		throw new ApiError(400, "Owner Details not Found");
 	}
@@ -79,7 +78,6 @@ exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 exports.getOwners = catchAsyncErrors(async (req, res) => {
 	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
 	const owners = await Owner.find();
-	console.log(req.query.id);
 	if (!owners) {
 		throw new ApiError(400, "Owners not Found");
 	}
@@ -167,22 +165,21 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 // })
 
 exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
-	
-    try {
+	try {
 		console.log(req?.file);
 
-        // Ensure req.file exists and has the necessary information
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No file uploaded' });
-        }
+		// Ensure req.file exists and has the necessary information
+		if (!req.file) {
+			return res.status(400).json({ success: false, message: "No file uploaded" });
+		}
 
-        // Generate a modified filename
-        const modifiedFileName = `resumebuilder-${Date.now()}${path.extname(req.file.originalname)}`;
-        // Upload the file to ImageKit
-		
-        const result = await imagekit.upload({
-            file: req.file.path, // path to the uploaded file
-            fileName: modifiedFileName, // modified file name
+		// Generate a modified filename
+		const modifiedFileName = `resumebuilder-${Date.now()}${path.extname(req.file.originalname)}`;
+		// Upload the file to ImageKit
+
+		const result = await imagekit.upload({
+			file: req.file.path, // path to the uploaded file
+			fileName: modifiedFileName, // modified file name
 			// transformation: [{
 			// 	post: {
 			// 		height: 300, // height of the transformed image
@@ -197,13 +194,12 @@ exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 			// 		// additional post-upload transformation parameters can be added here
 			// 	}
 			// }],
-        });
-		
+		});
 
-        // Respond with success message
-        res.status(200).json({ success: true, message: 'Profile Updated', url: result.url});
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Error uploading image to ImageKit' });
-    }
+		// Respond with success message
+		res.status(200).json({ success: true, message: "Profile Updated", url: result.url });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ success: false, message: "Error uploading image to ImageKit" });
+	}
 });
