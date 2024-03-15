@@ -42,6 +42,7 @@ exports.registerUser = catchAsyncErrors(async (req, res) => {
 // ?? Admin Login Handler
 exports.loginAdmin = catchAsyncErrors(async (req, res) => {
 	const { username, password } = req.body;
+
 	if (!username || !password) {
 		throw new ApiError(400, "phone number or email and password is required is required");
 	}
