@@ -92,3 +92,11 @@ exports.logoutUser = catchAsyncErrors(async (req, res) => {
 		.cookie("token", null, { expires: new Date(Date.now()), httpOnly: true })
 		.json(new ApiResponse(200, "Admin Logged Out Successfully"));
 });
+
+exports.myProfile = catchAsyncErrors(async (req, res) => {
+	const user = await User.findById(req.user._id);
+	if (!user) {
+		throw new ApiError(404, "User not found");
+	}
+	res.status(200).json(new ApiResponse(200, { success: true, user }));
+});
