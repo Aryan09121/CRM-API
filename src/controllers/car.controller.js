@@ -26,6 +26,16 @@ exports.getSingleCar = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, car, "car fetched successfully"));
 });
 
+exports.getCarsByownerId = catchAsyncErrors(async (req, res) => {
+	const ownerId = req?.params?.id;
+	console.log(ownerId);
+	const cars = await Car.find({ owner: ownerId });
+	if (!cars || cars.length === 0) {
+		throw new ApiError(404, "Cars Not Found");
+	}
+	res.status(200).json(new ApiResponse(200, cars, "cars fetched successfully"));
+});
+
 exports.carMaintenance = catchAsyncErrors(async (req, res) => {
 	const car = await Car.findById(req.body.id);
 	if (!car) {

@@ -19,25 +19,23 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 // models import
-const User = require("./models/user.model.js");
-const Owner = require("./models/owner.model.js");
-const Car = require("./models/car.model.js");
-const Driver = require("./models/driver.model.js");
+// const User = require("./models/user.model.js");
+// const Owner = require("./models/owner.model.js");
+// const Car = require("./models/car.model.js");
+// const Driver = require("./models/driver.model.js");
 
 // routes import
 
 const userRouter = require("./routes/user.routes.js");
 const ownerRouter = require("./routes/owner.routes.js");
 const carRouter = require("./routes/car.routes.js");
-const driverRouter = require("./routes/driver.routes.js");
-const tripRouter = require("./routes/trip.routes.js");
+// const tripRouter = require("./routes/trip.routes.js");
 
 //routes declare
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", ownerRouter);
 app.use("/api/v1/admin", carRouter);
-app.use("/api/v1/admin", driverRouter);
-app.use("/api/v1/admin", tripRouter);
+// app.use("/api/v1/admin", tripRouter);
 
 app.all("*", (req, res, next) => {
 	next(new ApiError(404, `Requested URL Not Found ${req.url}`));

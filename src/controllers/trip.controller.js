@@ -1,5 +1,4 @@
 const Trip = require("../models/trip.model");
-const Driver = require("../models/driver.model");
 const Car = require("../models/car.model");
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");

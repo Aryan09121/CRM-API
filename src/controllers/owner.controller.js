@@ -10,10 +10,10 @@ const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, contact, gender, email, address, hsn, pan, joinedDate } = req.body;
+	const { name, avatar, contact, gender, email, address, hsn, pan, joinedDate } = req.body;
 	const carsData = req.body.cars; // Extract cars data from request body
 
-	if ([name, email, contact, gender, hsn, pan].some((field) => field?.trim() === "")) {
+	if ([name, avatar, email, contact, gender, hsn, pan].some((field) => field?.trim() === "")) {
 		throw new ApiError(400, "All fields are required");
 	}
 
@@ -28,6 +28,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		contact,
 		gender,
 		email,
+		avatar,
 		address,
 		hsn,
 		pan,
@@ -67,7 +68,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 // ?? Get Single Owner Handler
 exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
-	const owner = await Owner.findById(req.query.id);
+	const owner = await Owner.findById(req.query.id).populate("cars");
 	if (!owner) {
 		throw new ApiError(400, "Owner Details not Found");
 	}
@@ -85,7 +86,7 @@ exports.getOwners = catchAsyncErrors(async (req, res) => {
 });
 
 // ?? update owner
-exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {	
+exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 	const { name, email, contact, gender, address, socials } = req.body;
 
 	const owner = await Owner.findById(req?.query?.id);

@@ -19,6 +19,10 @@ const carSchema = new Schema(
 			type: String,
 			required: [true, "Model is required"],
 		},
+		make: {
+			vendors: String,
+			company: String,
+		},
 		frvcode: {
 			type: String,
 			required: [true, "FRV Code is required"],
@@ -117,8 +121,5 @@ const carSchema = new Schema(
 	{ timestamps: true }
 );
 
-
 const Car = mongoose.model("Car", carSchema);
 module.exports = Car;
-
-
