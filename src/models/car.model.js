@@ -59,10 +59,10 @@ const carSchema = new Schema(
 				type: Date,
 				validate: {
 					validator: function (value) {
-						// Validate that start date is not in the future
-						return value <= new Date();
+						// Validate that start date is not in the past
+						return value >= new Date();
 					},
-					message: "Start date should not be in the future",
+					message: "Start date should not be from past",
 				},
 			},
 		},

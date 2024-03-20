@@ -9,29 +9,35 @@ const tripSchema = new Schema(
 			type: Schema.Types.ObjectId,
 			ref: "Car",
 		},
-		driver: {
-			type: Schema.Types.ObjectId,
-			ref: "Driver",
+		start: {
+			km: {
+				type: Number,
+				required: true,
+			},
+			date: {
+				type: Date,
+				required: true,
+				default: Date.now(),
+			},
 		},
-
-		startKm: {
-			type: Number,
-			required: true,
+		end: {
+			km: {
+				type: Number,
+			},
+			date: {
+				type: Date,
+			},
 		},
-
-		startDate: {
-			type: Date,
-			required: true,
+		route: {
+			source: {
+				type: String,
+				required: true,
+			},
+			destination: {
+				type: String,
+				required: true,
+			},
 		},
-
-		endingKm: {
-			type: Number,
-		},
-
-		endingDate: {
-			type: Date,
-		},
-
 		tripStatus: {
 			type: String,
 			enum: ["ongoing", "completed"],
