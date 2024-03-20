@@ -36,7 +36,15 @@ exports.registerUser = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(500, "Something went wrong while registering the user");
 	}
 
-	return res.status(201).json(new ApiResponse(200, createdUser, "User registered Successfully"));
+	const token = await user.getJwtToken();
+
+	const options = {
+		expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+		httpOnly: true,
+		// secure: true,
+	};
+
+	return res.status(201).cookie("token", token, options).json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
 
 // ?? Admin Login Handler

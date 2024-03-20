@@ -5,58 +5,54 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { startKm, startDate, endDate, driverId, carId } = req.body;
-	console.log("cron works");
+	const { source, destination, start, frvcode, carId, rate } = req.body;
 
-	const driver = await Driver.findById(driverId);
-	if (!driver) {
-		throw new ApiError(404, "Driver is Required!");
-	}
-	if (driver.status !== "available") {
-		throw new ApiError(404, "Driver is Already assigned a Trip");
-	}
-	const car = await Car.findById(carId);
-	if (!car) {
-		throw new ApiError(404, "Car is Required!");
+	if ([source, destination].some((field) => field?.trim() === "")) {
+		throw new ApiError(400, "All fields are required");
 	}
 
-	// Retrieve the driver's last trip
-	const lastTrip = driver.trips[0];
+	const startkm = start.km;
+	const startdate = new Date(start.date); // Convert start date to a Date object
 
-	// If the last trip exists, update its status to "completed"
-	if (lastTrip) {
-		lastTrip.status = "completed";
-		await lastTrip.save();
+	// Calculate the difference in days between startdate and today's date
+	const timeDifference = startdate.getTime() - Date.now();
+	const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+	let tripStatus;
+	if (daysDifference === 0) {
+		tripStatus = "ongoing"; // Trip is scheduled for today
+	} else if (daysDifference > 0) {
+		tripStatus = "upcoming"; // Trip is scheduled for the future
+	} else {
+		tripStatus = "past"; // Trip has already occurred
 	}
 
 	const trip = await Trip.create({
-		startKm,
-		startDate: startDate || Date.now(),
-		endingDate: endDate || null,
+		route: { source, destination },
+		tripStatus,
+		start: { km: startkm, date: startdate.toISOString() },
 	});
 
 	if (!trip) {
-		throw new ApiError(500, "Something went wrong While Assigning a trip!");
+		throw new ApiError(500, "Something went wrong while assigning a trip!");
 	}
 
-	trip.driver = driverId;
+	const car = await Car.findById(carId);
+	car.frvcode = frvcode;
+
+	car.start = {
+		km: trip.start.km,
+		date: trip.start.date,
+	};
+	car.rate = rate;
+
+	await car.save();
+
 	trip.car = carId;
 
-	const newTrip = await trip.save();
+	await trip.save();
 
-	driver.trips.unshift({
-		status: newTrip.status,
-		trip: newTrip._id,
-	});
-
-	driver.status = "ontrip";
-	if (!driver.cars.includes(newTrip.car)) {
-		driver.cars.unshift(newTrip.car);
-	}
-
-	await driver.save();
-
-	res.status(200).json(new ApiResponse(200, newTrip, "Trip Assignment Successfully"));
+	return res.status(200).json(new ApiResponse(200, trip, "Trip Assigned Successfully"));
 });
 
 exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {

@@ -40,7 +40,7 @@ const tripSchema = new Schema(
 		},
 		tripStatus: {
 			type: String,
-			enum: ["ongoing", "completed"],
+			enum: ["ongoing", "completed", "upcoming"],
 			default: "ongoing",
 		},
 	},

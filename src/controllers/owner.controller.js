@@ -14,9 +14,9 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	console.log(name, avatar, contact, gender, email, address, pan, joinedDate);
 	const carsData = req.body.cars; // Extract cars data from request body
 
-	// if ([name, email, contact, gender, pan].some((field) => field?.trim() === "")) {
-	// 	throw new ApiError(400, "All fields are required");
-	// }
+	if ([name, email, contact, gender, pan].some((field) => field === "")) {
+		throw new ApiError(400, "All fields are required");
+	}
 
 	const isOwnerExists = await Owner.findOne({ name, email, contact });
 	if (isOwnerExists) {

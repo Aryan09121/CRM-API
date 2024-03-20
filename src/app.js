@@ -3,6 +3,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { generatedErrors } = require("./middlewares/errors");
 const { ApiError } = require("./utils/ApiError");
+const path = require("path");
 
 const app = express();
 
@@ -18,12 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// models import
-// const User = require("./models/user.model.js");
-// const Owner = require("./models/owner.model.js");
-// const Car = require("./models/car.model.js");
-// const Driver = require("./models/driver.model.js");
-
 // routes import
 
 const userRouter = require("./routes/user.routes.js");
@@ -36,6 +31,9 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", ownerRouter);
 app.use("/api/v1/admin", carRouter);
 app.use("/api/v1/admin", tripRouter);
+
+// ?? multer image saving
+app.use("/", express.static(path.join(__dirname, "..", "/public", "/uploads")));
 
 app.all("*", (req, res, next) => {
 	next(new ApiError(404, `Requested URL Not Found ${req.url}`));
