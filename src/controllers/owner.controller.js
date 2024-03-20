@@ -10,10 +10,11 @@ const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, avatar, contact, gender, email, address, hsn, pan, joinedDate } = req.body;
+	const { name, avatar, phone: contact, gender, email, address, pan, joinedDate } = req.body;
+	console.log(name, avatar, contact, gender, email, address, pan, joinedDate);
 	const carsData = req.body.cars; // Extract cars data from request body
 
-	if ([name, avatar, email, contact, gender, hsn, pan].some((field) => field?.trim() === "")) {
+	if ([name, email, contact, gender, pan].some((field) => field?.trim() === "")) {
 		throw new ApiError(400, "All fields are required");
 	}
 
@@ -30,7 +31,6 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		email,
 		avatar,
 		address,
-		hsn,
 		pan,
 		joinedDate: joinedDate || Date.now(),
 	});

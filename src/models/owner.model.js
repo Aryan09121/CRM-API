@@ -8,11 +8,10 @@ const ownerSchema = new Schema(
 		name: {
 			type: String,
 			required: [true, "Name is required"],
-			minLength: [6, "name should be atleast 6 character long"],
 		},
 		contact: {
 			type: String,
-			unique: true,
+			unique: [true, "contact should be unique"],
 			minLength: [10, "Contact should be atleast 10 character long"],
 			maxLength: [10, "Contact must not be exceed 10 character long"],
 		},
@@ -23,7 +22,7 @@ const ownerSchema = new Schema(
 		},
 		email: {
 			type: String,
-			unique: true,
+			unique: [true, "email should be unique"],
 			reqired: [true, "Email is required"],
 			match: [/^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/, "Please fill a valid email address"],
 		},
@@ -31,7 +30,6 @@ const ownerSchema = new Schema(
 			street: {
 				type: String,
 				required: [true, "Street is required"],
-				minLength: [6, "Street should be atleast 6 character long"],
 			},
 			city: {
 				type: String,
@@ -40,12 +38,12 @@ const ownerSchema = new Schema(
 			state: {
 				type: String,
 				required: [true, "State is required"],
-				minLength: [3, "State should be atleast 3 character long"],
 			},
 			pincode: {
 				type: String,
 				required: [true, "Pincode is required"],
-				minLength: [6, "Pincode should be atleast 6 character long"],
+				minLength: [6, "Pincode should be  6 character long"],
+				maxLength: [6, "Pincode should be  6 character long"],
 			},
 		},
 		socials: {
@@ -53,14 +51,9 @@ const ownerSchema = new Schema(
 			twiiter: String,
 			instagram: String,
 		},
-		hsn: {
-			type: String,
-			unique: true,
-			required: true,
-		},
 		pan: {
 			type: String,
-			unique: true,
+			unique: [true, "pan no should be unique"],
 			required: true,
 		},
 		joinedDate: {

@@ -8,8 +8,8 @@ const carSchema = new Schema(
 		registrationNo: {
 			type: String,
 			required: [true, "registration Number is required"],
-			minLength: [9, "Registration Number should be 9 characters long"],
-			maxLength: [9, "Registration Number should be 9 characters long"],
+			minLength: [10, "Registration Number should be 10 characters long"],
+			maxLength: [10, "Registration Number should be 10 characters long"],
 		},
 		brand: {
 			type: String,
@@ -20,8 +20,7 @@ const carSchema = new Schema(
 			required: [true, "Model is required"],
 		},
 		make: {
-			vendors: String,
-			company: String,
+			type: String,
 		},
 		frvcode: {
 			type: String,
@@ -30,7 +29,6 @@ const carSchema = new Schema(
 		features: {
 			capacity: {
 				type: Number,
-				required: [true, "Capacity is required"],
 				min: [1, "Capacity should not be less than 1"],
 			},
 			type: {
@@ -39,7 +37,6 @@ const carSchema = new Schema(
 			},
 			maxSpeed: {
 				type: Number,
-				required: [true, "Speed is required"],
 			},
 		},
 		rate: {
@@ -111,7 +108,6 @@ const carSchema = new Schema(
 		],
 		district: {
 			type: String,
-			required: [true, "District is required"],
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
