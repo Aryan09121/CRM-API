@@ -5,7 +5,7 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { source, destination, start, frvcode, carId, rate } = req.body;
+	const { source, destination, start, frvcode, carId, rate, end } = req.body;
 
 	if ([source, destination].some((field) => field?.trim() === "")) {
 		throw new ApiError(400, "All fields are required");
@@ -26,12 +26,24 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 	} else {
 		tripStatus = "past"; // Trip has already occurred
 	}
+	let trip;
+	if (end) {
+		endkm = end.km;
+		enddate = new Date(end.date);
 
-	const trip = await Trip.create({
-		route: { source, destination },
-		tripStatus,
-		start: { km: startkm, date: startdate.toISOString() },
-	});
+		trip = await Trip.create({
+			route: { source, destination },
+			tripStatus,
+			start: { km: startkm, date: startdate.toISOString() },
+			end: { km: endkm, date: enddate.toISOString() },
+		});
+	} else {
+		trip = await Trip.create({
+			route: { source, destination },
+			tripStatus,
+			start: { km: startkm, date: startdate.toISOString() },
+		});
+	}
 
 	if (!trip) {
 		throw new ApiError(500, "Something went wrong while assigning a trip!");
@@ -44,6 +56,9 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		km: trip.start.km,
 		date: trip.start.date,
 	};
+	if (trip?.end) {
+		car = trip.end;
+	}
 	car.rate = rate;
 
 	await car.save();
