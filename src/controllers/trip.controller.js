@@ -12,7 +12,7 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 	}
 
 	const startkm = start.km;
-	const startdate = new Date(start.date); // Convert start date to a Date object
+	const startdate = parseDate(start.date);
 
 	// Calculate the difference in days between startdate and today's date
 	const timeDifference = startdate.getTime() - Date.now();
@@ -28,14 +28,14 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 	}
 	let trip;
 	if (end) {
-		endkm = end.km;
-		enddate = new Date(end.date);
+		const endkm = end.km;
+		const enddate = parseDate(end.date);
 
 		trip = await Trip.create({
 			route: { source, destination },
 			tripStatus,
 			start: { km: startkm, date: startdate.toISOString() },
-			end: { km: endkm, date: enddate.toISOString() },
+			end: { km: endkm, date: enddate.toISOString() }, // Using toISOString for enddate
 		});
 	} else {
 		trip = await Trip.create({
@@ -56,8 +56,11 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		km: trip.start.km,
 		date: trip.start.date,
 	};
-	if (trip?.end) {
-		car = trip.end;
+	if (trip.end) {
+		car.end = {
+			km: end.km,
+			date: parseDate(end.date).toISOString(),
+		};
 	}
 	car.rate = rate;
 
@@ -93,3 +96,9 @@ exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
 	await driver.save();
 	res.status(200).json(new ApiResponse(200, trip, "Trip Marked as Completed Successfully"));
 });
+
+const parseDate = (dateString) => {
+	const parts = dateString.split("/");
+	// Parts[2] contains year, parts[1] contains month, parts[0] contains day
+	return new Date(parts[2], parts[1] - 1, parts[0]); // Month is zero-based
+};

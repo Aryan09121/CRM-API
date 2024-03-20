@@ -8,6 +8,7 @@ const tripSchema = new Schema(
 		car: {
 			type: Schema.Types.ObjectId,
 			ref: "Car",
+			unique: true,
 		},
 		start: {
 			km: {

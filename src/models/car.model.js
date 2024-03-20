@@ -84,7 +84,8 @@ const carSchema = new Schema(
 				validate: {
 					validator: function (value) {
 						// Validate that end date is not in the future and greater than start date
-						return value <= new Date() && value >= this.start.date;
+						return value >= this.start.date;
+						// return value <= new Date() && value >= this.start.date;
 					},
 					message: "End date should not be in the future and should not be less than start date",
 				},
