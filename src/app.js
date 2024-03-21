@@ -25,12 +25,14 @@ const userRouter = require("./routes/user.routes.js");
 const ownerRouter = require("./routes/owner.routes.js");
 const carRouter = require("./routes/car.routes.js");
 const tripRouter = require("./routes/trip.routes.js");
+const invoiceRouter = require("./routes/invoice.routes.js");
 
 //routes declare
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/admin", ownerRouter);
 app.use("/api/v1/admin", carRouter);
 app.use("/api/v1/admin", tripRouter);
+app.use("/api/v1/admin", invoiceRouter);
 
 // ?? multer image saving
 app.use("/", express.static(path.join(__dirname, "..", "/public", "/uploads")));
