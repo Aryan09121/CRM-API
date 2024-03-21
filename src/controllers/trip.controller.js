@@ -90,6 +90,7 @@ exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
 	if (!trip.endingDate) {
 		trip.endingDate = new Date();
 	}
+
 	trip.end = {
 		km: end.km,
 		date: parseDate(end.date).toISOString(),
