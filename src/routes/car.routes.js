@@ -5,7 +5,7 @@ const { getCars, carMaintenance, getSingleCar, getCarsByownerId } = require("../
 
 const router = Router();
 
-router.route("/car").get(authUser, getCars);
+router.route("/cars").get(authUser, getCars);
 router.route("/update/car/maintenance").get(authUser, carMaintenance);
 router.route("/singlecar").get(authUser, getSingleCar);
 router.route("/get/cars/:id").get(authUser, getCarsByownerId);
