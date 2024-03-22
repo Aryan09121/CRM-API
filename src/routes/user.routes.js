@@ -25,7 +25,7 @@ const router = Router();
 router.route("/login").post(loginAdmin);
 
 // !! secured routes --------------------------------
-router.route("/register").post(authUser, registerUser);
+router.route("/register").post(registerUser);
 router.route("/me").get(authUser, myProfile);
 router.route("/logout").post(authUser, logoutUser);
 
