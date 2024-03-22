@@ -26,6 +26,35 @@ exports.getSingleCar = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, car, "car fetched successfully"));
 });
 
+exports.getBrandCarBrandsByOwnerId = catchAsyncErrors(async (req, res) => {
+	console.log(req.body);
+	const param = req.query.param;
+	console.log(param);
+	// Check if the search parameter is provided
+	if (!param) {
+		throw new ApiError(400, "Missing search parameter");
+	}
+
+	const owner = await Owner.findOne({ $or: [{ contact: param }, { email: param }] }).populate("cars");
+
+	// Check if owner exists
+	if (!owner) {
+		throw new ApiError(404, "Owner not found");
+	}
+
+	// Group cars by model name
+	const groupedCars = owner.cars.reduce((acc, car) => {
+		const modelName = car.model;
+		if (!acc[modelName]) {
+			acc[modelName] = [];
+		}
+		acc[modelName].push(car);
+		return acc;
+	}, {});
+
+	res.status(200).json(new ApiResponse(200, { owner, cars: groupedCars }, "cars fetched successfully"));
+});
+
 exports.getCarsByownerId = catchAsyncErrors(async (req, res) => {
 	const ownerId = req?.params?.id;
 	console.log(ownerId);
