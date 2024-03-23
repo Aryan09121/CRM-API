@@ -57,7 +57,7 @@ exports.loginAdmin = catchAsyncErrors(async (req, res) => {
 	const user = await User.findOne({
 		$or: [{ contact: username }, { email: username }],
 	}).select("+password");
-
+	console.log(user);
 	if (!user) {
 		throw new ApiError(404, "User does not exist");
 	}
