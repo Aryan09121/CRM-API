@@ -11,7 +11,6 @@ const imagekit = require("../utils/imagekit.js").initImageKit();
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const { name, avatar, phone: contact, gender, email, address, pan, joinedDate } = req.body;
-	console.log(name, avatar, contact, gender, email, address, pan, joinedDate);
 	const carsData = req.body.cars; // Extract cars data from request body
 
 	if ([name, email, contact, gender, pan].some((field) => field === "")) {

@@ -5,6 +5,11 @@ const { Schema } = mongoose;
 // trip Schema
 const tripSchema = new Schema(
 	{
+		frvcode: {
+			type: String,
+			required: true,
+			unique: true,
+		},
 		car: {
 			type: Schema.Types.ObjectId,
 			ref: "Car",

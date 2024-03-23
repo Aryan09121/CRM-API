@@ -22,10 +22,12 @@ const carSchema = new Schema(
 		make: {
 			type: String,
 		},
-		frvcode: {
-			type: String,
-			required: [true, "FRV Code is required"],
-		},
+		trip: [
+			{
+				type: Schema.Types.ObjectId,
+				ref: "trip",
+			},
+		],
 		features: {
 			capacity: {
 				type: Number,
