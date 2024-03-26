@@ -5,38 +5,32 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	try {
-		const { carId, district, year, frvCode, start, end } = req.body;
+	const { carId, district, year, frvCode, start, end } = req.body;
 
-		// Check if carId is provided
-		if (!carId) {
-			return res.status(400).json({ message: "Car ID is required." });
-		}
-
-		// Create a new trip instance
-		const trip = new Trip({
-			car: carId,
-			district,
-			year,
-			frvCode,
-			start: {
-				date: start.date,
-				km: start.km,
-			},
-			end: {
-				date: end.date,
-				km: end.km,
-			},
-		});
-
-		// Save the trip
-		await trip.save();
-
-		return res.status(201).json({ message: "Trip added successfully.", trip });
-	} catch (error) {
-		console.error("Error adding trip:", error);
-		return res.status(500).json({ message: "Internal server error." });
+	// Check if carId is provided
+	if (!carId) {
+		throw new ApiError(404, "Car ID is required.");
 	}
+
+	// Create a new trip instance
+	const trip = new Trip({
+		car: carId,
+		district,
+		year,
+		frvCode,
+		start: {
+			date: start.date,
+			km: start.km,
+		},
+		end: {
+			date: end.date,
+			km: end.km,
+		},
+	});
+
+	// Save the trip
+	await trip.save();
+	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 });
 
 exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
