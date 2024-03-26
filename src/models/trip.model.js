@@ -1,57 +1,55 @@
 const mongoose = require("mongoose");
-
 const { Schema } = mongoose;
 
-// trip Schema
 const tripSchema = new Schema(
 	{
-		frvcode: {
-			type: String,
-			required: true,
-			unique: true,
-		},
 		car: {
 			type: Schema.Types.ObjectId,
-			ref: "Car",
-			unique: true,
+			ref: "Car", // Reference to the Car model
+			unique: false, // Set to false to allow multiple trips for the same car
+		},
+		tripId: {
+			type: String,
+			unique: true, // Ensure uniqueness of tripId across all trips
+		},
+		district: {
+			type: String,
+			required: true,
+		},
+		year: {
+			type: Number,
+			required: true,
+		},
+		frvCode: {
+			type: String,
+			required: true,
 		},
 		start: {
-			km: {
-				type: Number,
-				required: true,
-			},
 			date: {
 				type: Date,
 				required: true,
-				default: Date.now(),
+			},
+			km: {
+				type: Number,
+				required: true,
 			},
 		},
 		end: {
-			km: {
-				type: Number,
-			},
 			date: {
 				type: Date,
 			},
-		},
-		route: {
-			source: {
-				type: String,
-				required: true,
-			},
-			destination: {
-				type: String,
-				required: true,
+			km: {
+				type: Number,
 			},
 		},
-		tripStatus: {
-			type: String,
-			enum: ["ongoing", "completed", "upcoming"],
-			default: "ongoing",
+		invoiceGenerated: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	{ timestamps: true }
 );
 
-const Trip = mongoose.model("trip", tripSchema);
+const Trip = mongoose.model("Trip", tripSchema);
+
 module.exports = Trip;

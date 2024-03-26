@@ -5,73 +5,43 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { source, destination, start, frvcode, carId, rate, end } = req.body;
+	const { carId, district, year, frvCode, start, end } = req.body;
 
-	if ([source, destination].some((field) => field?.trim() === "")) {
-		throw new ApiError(400, "All fields are required");
+	// Check if carId is provided
+	if (!carId) {
+		throw new ApiError(404, "Car ID is required.");
 	}
 
-	const startkm = start.km;
-	const startdate = parseDate(start.date);
+	// Generate a unique tripId
+	const tripId = generateTripId();
 
-	// Calculate the difference in days between startdate and today's date
-	const timeDifference = startdate.getTime() - Date.now();
-	const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-	let tripStatus;
-	if (daysDifference === 0) {
-		tripStatus = "ongoing"; // Trip is scheduled for today
-	} else if (daysDifference > 0) {
-		tripStatus = "upcoming"; // Trip is scheduled for the future
-	} else {
-		tripStatus = "past"; // Trip has already occurred
-	}
-	let trip;
-	if (end) {
-		const endkm = end.km;
-		const enddate = parseDate(end.date);
-
-		trip = await Trip.create({
-			route: { source, destination },
-			tripStatus,
-			start: { km: startkm, date: startdate.toISOString() },
-			end: { km: endkm, date: enddate.toISOString() }, // Using toISOString for enddate
-		});
-	} else {
-		trip = await Trip.create({
-			route: { source, destination },
-			tripStatus,
-			start: { km: startkm, date: startdate.toISOString() },
-		});
-	}
-
-	if (!trip) {
-		throw new ApiError(500, "Something went wrong while assigning a trip!");
-	}
-
-	const car = await Car.findById(carId);
-	car.frvcode = frvcode;
-
-	car.start = {
-		km: trip.start.km,
-		date: trip.start.date,
-	};
-	if (trip.end) {
-		car.end = {
+	// Create a new trip instance
+	const trip = new Trip({
+		car: carId,
+		tripId: tripId,
+		district,
+		year,
+		frvCode,
+		start: {
+			date: start.date,
+			km: start.km,
+		},
+		end: {
+			date: end.date,
 			km: end.km,
-			date: parseDate(end.date).toISOString(),
-		};
-	}
-	car.rate = rate;
+		},
+	});
 
-	await car.save();
-
-	trip.car = carId;
-
+	// Save the trip
 	await trip.save();
-
-	return res.status(200).json(new ApiResponse(200, trip, "Trip Assigned Successfully"));
+	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 });
+
+function generateTripId() {
+	// Logic to generate a unique tripId, you can use any unique identifier generation method
+	// For example, you can use UUID package or generate a unique combination of date and time
+	return "TRIP_" + Date.now(); // Example: TRIP_1636722075793
+}
 
 exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
 	const { id } = req.query;

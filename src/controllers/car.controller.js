@@ -65,14 +65,19 @@ exports.getCarsByownerId = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, cars, "cars fetched successfully"));
 });
 
-exports.carMaintenance = catchAsyncErrors(async (req, res) => {
-	const car = await Car.findById(req.body.id);
+exports.editCarRate = catchAsyncErrors(async (req, res) => {
+	const { day, km } = req.body;
+	const car = await Car.findById(req.query.id);
 	if (!car) {
 		throw new ApiError(404, "car Not Found");
 	}
-	// ?? year month amount
-	const { year, month, amount } = req.body;
-	car.maintenance.push({ year, month, amount });
+	car.rate = {
+		day: day,
+		km: km,
+	};
+
+	await car.save();
+
 	const updatedCar = await car.save();
 	if (!updatedCar) {
 		throw new ApiError(400, "Error while updating the car");
