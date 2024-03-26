@@ -6,6 +6,11 @@ const tripSchema = new Schema(
 		car: {
 			type: Schema.Types.ObjectId,
 			ref: "Car", // Reference to the Car model
+			unique: false, // Set to false to allow multiple trips for the same car
+		},
+		tripId: {
+			type: String,
+			unique: true, // Ensure uniqueness of tripId across all trips
 		},
 		district: {
 			type: String,
