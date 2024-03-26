@@ -217,55 +217,87 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	res.status(201).json(new ApiResponse(200, generatedInvoices, "Invoices generated successfully."));
 });
 
-// exports.generateInvoice = catchAsyncErrors(async (req, res) => {
-// 	const currentDate = new Date();
-// 	const cars = await Car.find();
+exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
+	const allInvoices = await Invoice.find().populate("owner");
 
-// 	if (!cars || cars.length === 0) {
-// 		throw new ApiError(404, "No cars found.");
-// 	}
+	if (!allInvoices || allInvoices.length === 0) {
+		throw new ApiError(404, "No invoices found in the database.");
+	}
+	// Create an empty array to store formatted invoices
+	const formattedInvoices = [];
 
-// 	const trips = await Trip.find({ invoiceGenerated: false }).populate("car");
+	allInvoices.forEach((invoice) => {
+		// Check if the owner is already present in formattedInvoices
+		const ownerIndex = formattedInvoices.findIndex((ownerInvoices) => {
+			return ownerInvoices.owner._id.toString() === invoice.owner._id.toString();
+		});
 
-// 	if (!trips || trips.length === 0) {
-// 		throw new ApiError(404, "No trips found to generate invoices.");
-// 	}
+		// If owner is not present, add the owner along with the current invoice
+		if (ownerIndex === -1) {
+			formattedInvoices.push({
+				owner: invoice.owner,
+				invoices: [
+					{
+						model: invoice.model,
+						invoice: [
+							{
+								invoiceId: invoice._id,
+								model: invoice.model,
+								dayQty: invoice.dayQty,
+								dayRate: invoice.dayRate,
+								dayAmount: invoice.dayAmount,
+								kmQty: invoice.kmQty,
+								kmRate: invoice.kmRate,
+								kmAmount: invoice.kmAmount,
+								totalAmount: invoice.totalAmount,
+								invoiceDate: invoice.invoiceDate,
+							},
+						],
+					},
+				],
+			});
+		} else {
+			// If owner is already present, find the model index
+			const modelIndex = formattedInvoices[ownerIndex].invoices.findIndex((inv) => {
+				return inv.model === invoice.model;
+			});
 
-// 	const invoicePromises = [];
-// 	const generatedInvoices = [];
+			// If model is not present, add the model along with the current invoice
+			if (modelIndex === -1) {
+				formattedInvoices[ownerIndex].invoices.push({
+					model: invoice.model,
+					invoice: [
+						{
+							invoiceId: invoice._id,
+							model: invoice.model,
+							dayQty: invoice.dayQty,
+							dayRate: invoice.dayRate,
+							dayAmount: invoice.dayAmount,
+							kmQty: invoice.kmQty,
+							kmRate: invoice.kmRate,
+							kmAmount: invoice.kmAmount,
+							totalAmount: invoice.totalAmount,
+							invoiceDate: invoice.invoiceDate,
+						},
+					],
+				});
+			} else {
+				// If model is already present, add the current invoice
+				formattedInvoices[ownerIndex].invoices[modelIndex].invoice.push({
+					invoiceId: invoice._id,
+					model: invoice.model,
+					dayQty: invoice.dayQty,
+					dayRate: invoice.dayRate,
+					dayAmount: invoice.dayAmount,
+					kmQty: invoice.kmQty,
+					kmRate: invoice.kmRate,
+					kmAmount: invoice.kmAmount,
+					totalAmount: invoice.totalAmount,
+					invoiceDate: invoice.invoiceDate,
+				});
+			}
+		}
+	});
 
-// 	trips.forEach((trip) => {
-// 		const car = trip.car;
-// 		const owner = car.owner;
-// 		const model = car.model;
-
-// 		const days = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
-// 		const km = trip.end.km - trip.start.km;
-
-// 		const dayAmount = days * car.rate.day;
-// 		const kmAmount = km * car.rate.km;
-// 		const totalAmount = dayAmount + kmAmount;
-
-// 		const newInvoice = new Invoice({
-// 			owner: owner,
-// 			model: model,
-// 			dayQty: days,
-// 			dayRate: car.rate.day,
-// 			dayAmount: dayAmount,
-// 			kmQty: km,
-// 			kmRate: car.rate.km,
-// 			kmAmount: kmAmount,
-// 			totalAmount: totalAmount,
-// 		});
-
-// 		invoicePromises.push(newInvoice.save());
-// 		generatedInvoices.push(newInvoice.toObject());
-// 	});
-
-// 	await Promise.all(invoicePromises);
-
-// 	// Mark trips as invoiced
-// 	await Trip.updateMany({ _id: { $in: trips.map((trip) => trip._id) } }, { invoiceGenerated: true });
-
-// 	res.status(201).json(new ApiResponse(200, generatedInvoices, "Invoices generated successfully."));
-// });
+	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
+});
