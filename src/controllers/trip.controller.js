@@ -5,72 +5,38 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { source, destination, start, frvcode, carId, rate, end } = req.body;
+	try {
+		const { carId, district, year, frvCode, start, end } = req.body;
 
-	if ([source, destination].some((field) => field?.trim() === "")) {
-		throw new ApiError(400, "All fields are required");
-	}
+		// Check if carId is provided
+		if (!carId) {
+			return res.status(400).json({ message: "Car ID is required." });
+		}
 
-	const startkm = start.km;
-	const startdate = parseDate(start.date);
-
-	// Calculate the difference in days between startdate and today's date
-	const timeDifference = startdate.getTime() - Date.now();
-	const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-	let tripStatus;
-	if (daysDifference === 0) {
-		tripStatus = "ongoing"; // Trip is scheduled for today
-	} else if (daysDifference > 0) {
-		tripStatus = "upcoming"; // Trip is scheduled for the future
-	} else {
-		tripStatus = "past"; // Trip has already occurred
-	}
-	let trip;
-	if (end) {
-		const endkm = end.km;
-		const enddate = parseDate(end.date);
-
-		trip = await Trip.create({
-			route: { source, destination },
-			tripStatus,
-			start: { km: startkm, date: startdate.toISOString() },
-			end: { km: endkm, date: enddate.toISOString() }, // Using toISOString for enddate
+		// Create a new trip instance
+		const trip = new Trip({
+			car: carId,
+			district,
+			year,
+			frvCode,
+			start: {
+				date: start.date,
+				km: start.km,
+			},
+			end: {
+				date: end.date,
+				km: end.km,
+			},
 		});
-	} else {
-		trip = await Trip.create({
-			route: { source, destination },
-			tripStatus,
-			start: { km: startkm, date: startdate.toISOString() },
-		});
+
+		// Save the trip
+		await trip.save();
+
+		return res.status(201).json({ message: "Trip added successfully.", trip });
+	} catch (error) {
+		console.error("Error adding trip:", error);
+		return res.status(500).json({ message: "Internal server error." });
 	}
-
-	if (!trip) {
-		throw new ApiError(500, "Something went wrong while assigning a trip!");
-	}
-
-	const car = await Car.findById(carId);
-	car.frvcode = frvcode;
-
-	car.start = {
-		km: trip.start.km,
-		date: trip.start.date,
-	};
-	if (trip.end) {
-		car.end = {
-			km: end.km,
-			date: parseDate(end.date).toISOString(),
-		};
-	}
-	car.rate = rate;
-
-	await car.save();
-
-	trip.car = carId;
-
-	await trip.save();
-
-	return res.status(200).json(new ApiResponse(200, trip, "Trip Assigned Successfully"));
 });
 
 exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
