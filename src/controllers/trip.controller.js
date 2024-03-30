@@ -5,7 +5,7 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { carId, district, year, frvCode, start, end } = req.body;
+	const { carId, district, year, frvCode, start } = req.body;
 
 	// Check if carId is provided
 	if (!carId) {
@@ -25,10 +25,6 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		start: {
 			date: start.date,
 			km: start.km,
-		},
-		end: {
-			date: end.date,
-			km: end.km,
 		},
 	});
 
