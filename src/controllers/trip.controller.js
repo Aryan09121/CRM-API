@@ -43,39 +43,6 @@ function generateTripId() {
 	return "TRIP_" + Date.now(); // Example: TRIP_1636722075793
 }
 
-exports.markTripasCompleted = catchAsyncErrors(async (req, res) => {
-	const { id } = req.query;
-	const { end } = req.body;
-
-	const trip = await Trip.findById(id);
-	if (!trip) {
-		throw new ApiError(404, "Trip Not Found");
-	}
-	if (trip.tripStatus === "completed") {
-		throw new ApiError(404, "Trip Already Completed");
-	}
-
-	trip.tripStatus = "completed";
-
-	if (!trip.endingDate) {
-		trip.endingDate = new Date();
-	}
-
-	trip.end = {
-		km: end.km,
-		date: parseDate(end.date).toISOString(),
-	};
-
-	await trip.save();
-
-	const car = await Car.findById(trip.car);
-	car.tripStatus = "completed";
-
-	await car.save();
-
-	res.status(200).json(new ApiResponse(200, trip, "Trip Marked as Completed Successfully"));
-});
-
 const parseDate = (dateString) => {
 	const parts = dateString.split("/");
 	// Parts[2] contains year, parts[1] contains month, parts[0] contains day
