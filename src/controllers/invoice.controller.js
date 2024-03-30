@@ -166,7 +166,10 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const currentDate = new Date();
-	const cars = await Car.find();
+
+	// if (currentDate.getDate() === 1) {
+	// 	throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
+	// }
 
 	if (!cars || cars.length === 0) {
 		throw new ApiError(404, "No cars found.");
@@ -178,19 +181,31 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "No trips found to generate invoices.");
 	}
 
+	const { end } = req.body;
+
+	if (!end || end.length === 0) {
+		throw new ApiError(400, "End kilometers are required.");
+	}
+
+	const endMap = new Map(end.map(({ email, km }) => [email, km]));
+
 	const invoicePromises = [];
 	const generatedInvoices = [];
 
-	trips.forEach((trip) => {
+	trips.forEach(async (trip) => {
 		const car = trip.car;
 		const owner = car.owner;
 		const model = car.model;
 
-		const days = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
-		const km = trip.end.km - trip.start.km;
+		const days = Math.ceil((currentDate - trip.start.date) / (1000 * 60 * 60 * 24));
+		const endKm = endMap.get(owner.email); // Get the end kilometer for the respective owner
+
+		if (!endKm) {
+			throw new ApiError(400, `End kilometer not provided for owner with email ${owner.email}.`);
+		}
 
 		const dayAmount = days * car.rate.day;
-		const kmAmount = km * car.rate.km;
+		const kmAmount = (endKm - trip.start.km) * car.rate.km; // Calculate kilometers based on end kilometer
 		const totalAmount = dayAmount + kmAmount;
 
 		const newInvoice = new Invoice({
@@ -199,7 +214,7 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 			dayQty: days,
 			dayRate: car.rate.day,
 			dayAmount: dayAmount,
-			kmQty: km,
+			kmQty: endKm - trip.start.km, // Calculate kilometers difference
 			kmRate: car.rate.km,
 			kmAmount: kmAmount,
 			totalAmount: totalAmount,
@@ -207,6 +222,10 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 
 		invoicePromises.push(newInvoice.save());
 		generatedInvoices.push(newInvoice.toObject());
+
+		// Update car's kilometers
+		car.currentKm = endKm;
+		await car.save();
 	});
 
 	await Promise.all(invoicePromises);
