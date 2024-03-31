@@ -166,11 +166,13 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const currentDate = new Date();
+	// TODO: need to change === to !== as invoice is only generated on the 1st of every month
+	if (currentDate.getDate() === 1) {
+		throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
+	}
 
-	// if (currentDate.getDate() === 1) {
-	// 	throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
-	// }
-
+	const cars = await Car.find().populate("owner"); // Populate the owner field in the Car document
+	console.log(cars);
 	if (!cars || cars.length === 0) {
 		throw new ApiError(404, "No cars found.");
 	}
@@ -192,11 +194,15 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const invoicePromises = [];
 	const generatedInvoices = [];
 
-	trips.forEach(async (trip) => {
+	for (const trip of trips) {
 		const car = trip.car;
-		const owner = car.owner;
+		const carWithOwner = cars.find((c) => c._id.toString() === car._id.toString()); // Find the car from the populated cars array
+		if (!carWithOwner) {
+			throw new ApiError(404, "Car not found.");
+		}
+		const owner = carWithOwner.owner; // Access owner from the car document
 		const model = car.model;
-
+		console.log(owner);
 		const days = Math.ceil((currentDate - trip.start.date) / (1000 * 60 * 60 * 24));
 		const endKm = endMap.get(owner.email); // Get the end kilometer for the respective owner
 
@@ -207,6 +213,11 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		const dayAmount = days * car.rate.day;
 		const kmAmount = (endKm - trip.start.km) * car.rate.km; // Calculate kilometers based on end kilometer
 		const totalAmount = dayAmount + kmAmount;
+
+		// Update end date and end km in the Trip schema
+		trip.end.date = currentDate;
+		trip.end.km = endKm;
+		await trip.save();
 
 		const newInvoice = new Invoice({
 			owner: owner,
@@ -220,15 +231,13 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 			totalAmount: totalAmount,
 		});
 
-		invoicePromises.push(newInvoice.save());
+		await newInvoice.save(); // Wait for the invoice to be saved before pushing to the array
 		generatedInvoices.push(newInvoice.toObject());
 
 		// Update car's kilometers
-		car.currentKm = endKm;
-		await car.save();
-	});
-
-	await Promise.all(invoicePromises);
+		carWithOwner.currentKm = endKm;
+		await carWithOwner.save();
+	}
 
 	// Mark trips as invoiced
 	await Trip.updateMany({ _id: { $in: trips.map((trip) => trip._id) } }, { invoiceGenerated: true });
