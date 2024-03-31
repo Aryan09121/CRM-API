@@ -40,7 +40,7 @@ const carSchema = new Schema(
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
-			ref: "Owner", // Reference to the Owner model
+			ref: "owner", // Reference to the Owner model
 		},
 	},
 	{ timestamps: true }
