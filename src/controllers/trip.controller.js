@@ -5,11 +5,21 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { carId, district, year, frvCode, start } = req.body;
+	const { registrationNo, district, year, frvCode, start } = req.body;
 
 	// Check if carId is provided
-	if (!carId) {
-		throw new ApiError(404, "Car ID is required.");
+	if (!registrationNo) {
+		throw new ApiError(404, "Registration number is required.");
+	}
+
+	if (!district && !year && !frvCode && !start) {
+		throw new ApiError(404, "All Fields is required.");
+	}
+
+	const car = await Car.find({ registrationNo: registrationNo });
+
+	if (!car) {
+		throw new ApiError(404, "car Not Found");
 	}
 
 	// Generate a unique tripId
@@ -17,7 +27,7 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 
 	// Create a new trip instance
 	const trip = new Trip({
-		car: carId,
+		car: car._id,
 		tripId: tripId,
 		district,
 		year,
