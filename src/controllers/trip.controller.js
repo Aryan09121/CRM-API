@@ -16,7 +16,7 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "All Fields is required.");
 	}
 
-	const car = await Car.find({ registrationNo: registrationNo });
+	const car = await Car.findOne({ registrationNo: registrationNo });
 
 	if (!car) {
 		throw new ApiError(404, "car Not Found");
