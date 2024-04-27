@@ -4,7 +4,15 @@ const { Schema } = mongoose;
 const invoiceSchema = new Schema({
 	owner: {
 		type: Schema.Types.ObjectId,
-		ref: "owner", // Reference to the Owner model
+		ref: "owner",
+	},
+	trip: {
+		type: Schema.Types.ObjectId,
+		ref: "trip",
+	},
+	car: {
+		type: Schema.Types.ObjectId,
+		ref: "car",
 	},
 	model: {
 		type: String,
@@ -13,6 +21,10 @@ const invoiceSchema = new Schema({
 	dayQty: {
 		type: Number,
 		required: true,
+	},
+	offroad: {
+		type: Number,
+		default: 0,
 	},
 	dayRate: {
 		type: Number,
