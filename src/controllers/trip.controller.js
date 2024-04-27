@@ -22,13 +22,9 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "car Not Found");
 	}
 
-	// Generate a unique tripId
-	const tripId = generateTripId();
-
 	// Create a new trip instance
 	const trip = new Trip({
 		car: car._id,
-		tripId: tripId,
 		district,
 		year,
 		frvCode,
@@ -38,15 +34,52 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		},
 	});
 
-	// Save the trip
+	if (!trip) {
+		throw new ApiError(404, "Internal server error while creating a trip");
+	}
+
+	const id = generateTripId(trip.district, trip.frvCode);
+
+	trip.tripId = id;
+
+	car.trip.push(trip._id);
+	await car.save();
 	await trip.save();
 	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 });
 
-function generateTripId() {
-	// Logic to generate a unique tripId, you can use any unique identifier generation method
-	// For example, you can use UUID package or generate a unique combination of date and time
-	return "TRIP_" + Date.now(); // Example: TRIP_1636722075793
+// ?? get all trips
+
+exports.getAllTrips = catchAsyncErrors(async (req, res) => {
+	const trips = await Trip.find().populate("car");
+	console.log(trips);
+
+	if (!trips || trips.length === 0) {
+		res.status(201).json(new ApiResponse(200, [], "no trips found."));
+	}
+	res.status(201).json(new ApiResponse(200, trips, "Trips fetched Successfully."));
+});
+
+function generateTripId(district, frvCode) {
+	// Extract first three letters from district name
+	const districtPrefix = district.substring(0, 3).toUpperCase();
+
+	// Generate a random index within the range of frvCode length
+	const randomIndex = Math.floor(Math.random() * (frvCode.length - 2)); // Subtracting 2 to ensure the substring length is at least 1
+
+	// Extract a random substring from frvCode
+	const frvCodePrefix = frvCode.substring(randomIndex, randomIndex + 3).toUpperCase();
+
+	// Generate unique identifier (e.g., using Date.now() with padding)
+	const uniqueIdentifier = padDigits(Date.now() % 1000, 3);
+
+	// Combine "TRIP-" prefix, district prefix, frvCode prefix, and unique identifier
+	return `TRIP-${districtPrefix}${frvCodePrefix}${uniqueIdentifier}`;
+}
+
+// Function to pad a number with leading zeros to ensure a fixed length
+function padDigits(number, digits) {
+	return String(number).padStart(digits, "0");
 }
 
 const parseDate = (dateString) => {

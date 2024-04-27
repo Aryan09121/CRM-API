@@ -34,6 +34,10 @@ const tripSchema = new Schema(
 				required: true,
 			},
 		},
+		offroad: {
+			type: Number,
+			default: 0,
+		},
 		end: {
 			date: {
 				type: Date,
@@ -42,9 +46,15 @@ const tripSchema = new Schema(
 				type: Number,
 			},
 		},
-		invoiceGenerated: {
-			type: Boolean,
-			default: false,
+		generated: [
+			{
+				type: Date,
+			},
+		],
+		status: {
+			type: String,
+			enum: ["ongoing", "completed"], // Define possible values for status
+			default: "ongoing", // Set default status as "ongoing"
 		},
 	},
 	{ timestamps: true }
