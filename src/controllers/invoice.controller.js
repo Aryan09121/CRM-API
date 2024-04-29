@@ -6,33 +6,40 @@ const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
-exports.generateInvoice = catchAsyncErrors(async (req, res) => {
-	const { carno, status, end } = req.body;
-	// const { date, km } = end;
-	// const currentDate = new Date();
-	const car = await Car.findOne({ registrationNo: carno }).populate("owner");
-	let invoices = [];
-	for (const trip of car.trip) {
-		const tripend = end.filter((t) => t.id === trip)[0];
-		const invoice = await generateInv(trip, tripend, status);
-		invoices.push(invoice);
+function generateInvoiceId(model) {
+	// Define character sets for readability
+	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+	// Generate a unique identifier
+	let uniqueIdentifier = "";
+	for (let i = 0; i < 5; i++) {
+		uniqueIdentifier += characters.charAt(Math.floor(Math.random() * characters.length));
 	}
 
-	res.status(201).json(new ApiResponse(200, invoices, "Invoices generated successfully."));
-});
+	// Combine prefix and unique identifier
+	return `${model.toUpperCase().substring(0, 3)}-${uniqueIdentifier}`;
+}
 
-const generateInv = async (id, end, status) => {
-	const trip = await Trip.findById(id).populate("car");
-
+exports.generateInvoice = catchAsyncErrors(async (req, res) => {
+	const { tripId, status, end } = req.body;
+	const trip = await Trip.findOne({ tripId }).populate("car");
+	if (!trip) {
+		throw new ApiError(404, "Trip not found");
+	}
+	if (trip.status === "completed") {
+		throw new ApiError(404, "Trip already completed");
+	}
+	console.log(new Date().toISOString().split("T")[0]);
+	console.log(trip.generated.includes(new Date().toISOString().split("T")[0]));
+	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
+		console.log("hellow");
+		throw new ApiError(403, "Invoice already generated for today");
+	}
 	if (trip.start.km > end.km) {
 		throw new ApiError(401, "end km is not greater than start km");
 	}
 
-	trip.end = {
-		km: end.km,
-		date: end.date || Date.now(),
-	};
-
+	trip.end = end;
 	await trip.save();
 	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
 	const kmqty = Math.ceil(trip.end.km - trip.start.km);
@@ -40,11 +47,14 @@ const generateInv = async (id, end, status) => {
 	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
 	const kmAmount = kmqty * trip.car.rate.km;
 
-	const total = dayAmount + kmAmount;
+	const total = (dayAmount + kmAmount).toFixed(2);
+
+	const invoiceId = generateInvoiceId(trip.car.model);
 
 	const invoice = await Invoice.create({
 		owner: trip.car.owner,
-		trip: trip._id,
+		trip: trip._id.toString(),
+		invoiceId,
 		car: trip.car._id,
 		model: trip.car.model,
 		dayQty: dayqty,
@@ -52,14 +62,24 @@ const generateInv = async (id, end, status) => {
 		dayAmount: dayAmount,
 		kmQty: kmqty,
 		kmRate: trip.car.rate.km,
+		from: trip.start.date,
+		to: end.date,
 		kmAmount: kmAmount,
 		totalAmount: total,
 		offroad: trip.offroad,
 	});
 
+	trip.generated.push(new Date().toISOString().split("T")[0]);
+
 	if (status === false) {
 		trip.status = "completed";
-		trip.start.km = end.km;
+		trip.start = {
+			date: trip.end.date,
+			km: trip.end.km,
+		};
+		trip.offroad = 0;
+
+		const car = await Car.findById(trip.car);
 	} else {
 		trip.start = {
 			date: trip.end.date,
@@ -70,8 +90,8 @@ const generateInv = async (id, end, status) => {
 	}
 	await trip.save();
 
-	return invoice;
-};
+	res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));
+});
 
 exports.generateInvoices = catchAsyncErrors(async (req, res) => {
 	const currentDate = new Date();
@@ -218,16 +238,20 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 						model: invoice.model,
 						invoice: [
 							{
-								invoiceId: invoice._id,
+								_id: invoice._id,
+								invoiceId: invoice.invoiceId,
 								model: invoice.model,
 								dayQty: invoice.dayQty,
 								dayRate: invoice.dayRate,
 								dayAmount: invoice.dayAmount,
 								kmQty: invoice.kmQty,
+								offroad: invoice.offroad,
 								kmRate: invoice.kmRate,
 								kmAmount: invoice.kmAmount,
 								totalAmount: invoice.totalAmount,
 								invoiceDate: invoice.invoiceDate,
+								from: invoice.from,
+								to: invoice.to,
 							},
 						],
 					},
@@ -245,23 +269,28 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 					model: invoice.model,
 					invoice: [
 						{
-							invoiceId: invoice._id,
+							_id: invoice._id,
+							invoiceId: invoice.invoiceId,
 							model: invoice.model,
 							dayQty: invoice.dayQty,
 							dayRate: invoice.dayRate,
+							offroad: invoice.offroad,
 							dayAmount: invoice.dayAmount,
 							kmQty: invoice.kmQty,
 							kmRate: invoice.kmRate,
 							kmAmount: invoice.kmAmount,
 							totalAmount: invoice.totalAmount,
 							invoiceDate: invoice.invoiceDate,
+							from: invoice.from,
+							to: invoice.to,
 						},
 					],
 				});
 			} else {
 				// If model is already present, add the current invoice
 				formattedInvoices[ownerIndex].invoices[modelIndex].invoice.push({
-					invoiceId: invoice._id,
+					_id: invoice._id,
+					invoiceId: invoice.invoiceId,
 					model: invoice.model,
 					dayQty: invoice.dayQty,
 					dayRate: invoice.dayRate,
@@ -269,8 +298,11 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 					kmQty: invoice.kmQty,
 					kmRate: invoice.kmRate,
 					kmAmount: invoice.kmAmount,
+					offroad: invoice.offroad,
 					totalAmount: invoice.totalAmount,
 					invoiceDate: invoice.invoiceDate,
+					from: invoice.from,
+					to: invoice.to,
 				});
 			}
 		}
@@ -278,161 +310,3 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 
 	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
 });
-
-// exports.generateInvoice = catchAsyncErrors(async (req, res) => {
-// Assuming ownerId is extracted from the request
-// 	const ownerId = req.query.id; // Adjust this based on your authentication mechanism
-// 	const currentDate = new Date();
-
-// 	// Check if it's the 1st day of the month
-// 	if (currentDate.getDate() === 1) {
-// 		throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
-// 	}
-
-// 	const trips = await Trip.find({ invoiceGenerated: { $ne: true } }).populate("car");
-// 	if (!trips || trips.length === 0) {
-// 		throw new ApiError(404, "No trips found to generate invoices.");
-// 	}
-
-// 	console.log(trips);
-
-// 	const invoices = {};
-
-// 	trips.forEach((trip) => {
-// 		const car = trip.car;
-// 		const model = car.model;
-// 		// console.log("car = ", car);
-// 		// console.log("model =", model);
-// 		if (!invoices[model]) {
-// 			invoices[model] = {
-// 				dayAmount: 0,
-// 				kmAmount: 0,
-// 				dayQty: 0,
-// 				kmQty: 0,
-// 			};
-// 		}
-// 		// console.log(invoices);
-// 		const days = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
-// 		const km = trip.end.km - trip.start.km;
-
-// 		console.log(car.rate.day);
-// 		console.log(car.rate.km);
-// 		console.log("****************************************************************");
-// 		console.log("****************************************************************");
-
-// 		invoices[model].dayAmount += days * car.rate.day;
-// 		invoices[model].kmAmount += km * car.rate.km;
-// 		invoices[model].dayQty += days;
-// 		invoices[model].kmQty += km;
-// 	});
-
-// 	console.log(invoices);
-// 	console.log("****************************************************************");
-// 	console.log("****************************************************************");
-
-// 	const invoicePromises = [];
-// 	const generatedInvoices = [];
-
-// 	Object.entries(invoices).forEach(([model, invoice]) => {
-// 		const car = trips[0].car; // Assuming all trips have the same car
-// 		const totalAmount = invoice.dayAmount + invoice.kmAmount;
-// 		const newInvoice = new Invoice({
-// 			owner: ownerId,
-// 			model,
-// 			dayQty: invoice.dayQty,
-// 			dayRate: car.rate.day, // Assuming dayRate is set in car model
-// 			dayAmount: invoice.dayAmount,
-// 			kmQty: invoice.kmQty,
-// 			kmRate: car.rate.km, // Assuming kmRate is set in car model
-// 			kmAmount: invoice.kmAmount,
-// 			totalAmount,
-// 		});
-// 		invoicePromises.push(newInvoice.save());
-// 		generatedInvoices.push(newInvoice.toObject()); // Convert to plain JavaScript object
-// 	});
-
-// 	await Promise.all(invoicePromises);
-
-// 	// Mark trips as invoiced
-// 	await Trip.updateMany({ _id: { $in: trips.map((trip) => trip._id) } }, { invoiceGenerated: true });
-
-// 	res.status(201).json(new ApiResponse(200, generatedInvoices, "Invoices generated successfully."));
-// });
-
-// exports.generateInvoice = catchAsyncErrors(async (req, res) => {
-// 	const currentDate = new Date();
-
-// 	// if (currentDate.getDate() !== 1) {
-// 	// 	throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
-// 	// }
-
-// 	const cars = await Car.find();
-
-// 	if (!cars || cars.length === 0) {
-// 		throw new ApiError(404, "No cars found.");
-// 	}
-
-// 	const trips = await Trip.find({ invoiceGenerated: { $ne: true } }).populate("car");
-
-// 	if (!trips || trips.length === 0) {
-// 		throw new ApiError(404, "No trips found to generate invoices.");
-// 	}
-
-// 	const invoices = {};
-
-// 	trips.forEach((trip) => {
-// 		const car = trip.car;
-// 		const owner = car.owner;
-// 		const model = car.model;
-
-// 		if (!invoices[owner]) {
-// 			invoices[owner] = {};
-// 		}
-
-// 		if (!invoices[owner][model]) {
-// 			invoices[owner][model] = {
-// 				dayAmount: 0,
-// 				kmAmount: 0,
-// 				dayQty: 0,
-// 				kmQty: 0,
-// 			};
-// 		}
-
-// 		const days = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
-// 		const km = trip.end.km - trip.start.km;
-
-// 		invoices[owner][model].dayAmount += days * car.rate.day;
-// 		invoices[owner][model].kmAmount += km * car.rate.km;
-// 		invoices[owner][model].dayQty += days;
-// 		invoices[owner][model].kmQty += km;
-// 	});
-
-// 	const invoicePromises = [];
-// 	const generatedInvoices = [];
-
-// 	Object.entries(invoices).forEach(([ownerId, ownerData]) => {
-// 		Object.entries(ownerData).forEach(([model, invoice]) => {
-// 			const totalAmount = invoice.dayAmount + invoice.kmAmount;
-// 			const newInvoice = new Invoice({
-// 				owner: ownerId,
-// 				model,
-// 				dayQty: invoice.dayQty,
-// 				dayRate: cars.find((car) => car.owner == ownerId && car.model == model).rate.day,
-// 				dayAmount: invoice.dayAmount,
-// 				kmQty: invoice.kmQty,
-// 				kmRate: cars.find((car) => car.owner == ownerId && car.model == model).rate.km,
-// 				kmAmount: invoice.kmAmount,
-// 				totalAmount,
-// 			});
-// 			invoicePromises.push(newInvoice.save());
-// 			generatedInvoices.push(newInvoice.toObject());
-// 		});
-// 	});
-
-// 	await Promise.all(invoicePromises);
-
-// 	// Mark only the selected trips as invoiced
-// 	await Trip.updateMany({ _id: { $in: trips.map((trip) => trip._id) } }, { invoiceGenerated: true });
-
-// 	res.status(201).json(new ApiResponse(200, generatedInvoices, "Invoices generated successfully."));
-// });

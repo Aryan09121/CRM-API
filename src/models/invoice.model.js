@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const invoiceSchema = new Schema({
+	invoiceId: {
+		type: String,
+		unique: true,
+	},
 	owner: {
 		type: Schema.Types.ObjectId,
 		ref: "owner",
@@ -50,9 +54,20 @@ const invoiceSchema = new Schema({
 		type: Number,
 		required: true,
 	},
+	from: {
+		type: Date,
+	},
+	to: {
+		type: Date,
+	},
 	invoiceDate: {
 		type: Date,
 		default: Date.now,
+	},
+	status: {
+		type: String,
+		enum: ["paid", "pending", "unpaid"],
+		default: "pending",
 	},
 });
 
