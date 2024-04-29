@@ -48,7 +48,7 @@ const tripSchema = new Schema(
 		},
 		generated: [
 			{
-				type: Date,
+				type: String,
 			},
 		],
 		status: {
