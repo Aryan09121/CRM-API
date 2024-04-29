@@ -11,7 +11,7 @@ const carSchema = new Schema(
 			type: String,
 			required: true,
 		},
-		trip: [{ type: String, ref: "trip" }],
+		trip: [{ type: String, ref: "Trip" }],
 		brand: {
 			type: String,
 			required: true,
@@ -31,7 +31,7 @@ const carSchema = new Schema(
 		},
 		rate: {
 			date: {
-				type: Date,
+				type: Number,
 				min: 0,
 			},
 			km: {

@@ -5,7 +5,7 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.getCars = catchAsyncErrors(async (req, res) => {
-	const cars = await Car.find();
+	const cars = await Car.find().populate("trip");
 	if (!cars) {
 		throw new ApiError(404, "cars Not Found");
 	}
