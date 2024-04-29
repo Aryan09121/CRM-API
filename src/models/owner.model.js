@@ -53,8 +53,16 @@ const ownerSchema = new Schema(
 		},
 		pan: {
 			type: String,
-			unique: [true, "pan no should be unique"],
+			unique: [true, "gst no should be unique"],
 			required: true,
+		},
+		gst: {
+			type: String,
+			unique: [true, "gst no should be unique"],
+		},
+		hsn: {
+			type: String,
+			// unique: [true, "pan no should be unique"],
 		},
 		joinedDate: {
 			type: Date,
@@ -81,6 +89,11 @@ const ownerSchema = new Schema(
 				ref: "Car",
 			},
 		],
+		status: {
+			type: String,
+			enum: ["paid", "unpaid"],
+			default: "unpaid",
+		},
 	},
 	{ timestamps: true }
 );

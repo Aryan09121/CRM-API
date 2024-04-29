@@ -10,7 +10,7 @@ const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, avatar, phone: contact, gender, email, address, pan, joinedDate } = req.body;
+	const { name, avatar, phone: contact, gender, email, address, gst, pan, joinedDate } = req.body;
 	const carsData = req.body.cars; // Extract cars data from request body
 
 	if ([name, email, contact, gender, pan].some((field) => field === "")) {
@@ -26,6 +26,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const owner = await Owner.create({
 		name,
 		contact,
+		gst,
 		gender,
 		email,
 		avatar,
@@ -46,6 +47,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		if (!singlecar) {
 			throw new ApiError(500, "Something went wrong while registering the car");
 		}
+		console.log(singlecar);
 		owner.cars.push(singlecar._id);
 		await owner.save();
 		// Update the created car to include a reference to the owner
