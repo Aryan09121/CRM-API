@@ -11,6 +11,7 @@ const carSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		totalkm: { type: Number, default: 0 },
 		trip: [{ type: String, ref: "Trip" }],
 		brand: {
 			type: String,
@@ -38,6 +39,22 @@ const carSchema = new Schema(
 				type: Number,
 				min: 0,
 			},
+		},
+		amount: {
+			type: Number,
+			default: 0,
+		},
+		dayAmount: {
+			type: Number,
+			default: 0,
+		},
+		kmAmount: {
+			type: Number,
+			default: 0,
+		},
+		amountpaid: {
+			type: Number,
+			default: 200,
 		},
 		start: {
 			date: {

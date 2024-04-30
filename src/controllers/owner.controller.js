@@ -43,11 +43,11 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		// Create the car without owner reference
 		const singlecar = await Car.create({
 			...carData,
+			// totalkm: -carData.start.km,
 		});
 		if (!singlecar) {
 			throw new ApiError(500, "Something went wrong while registering the car");
 		}
-		console.log(singlecar);
 		owner.cars.push(singlecar._id);
 		await owner.save();
 		// Update the created car to include a reference to the owner

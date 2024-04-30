@@ -22,6 +22,12 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "car Not Found");
 	}
 
+	if (start.km < car.start.km) {
+		throw new ApiError(404, "start km is too low");
+	}
+
+	const kmdiff = start.km - car.totalkm;
+
 	// Create a new trip instance
 	const trip = new Trip({
 		car: car._id,
@@ -41,7 +47,7 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 	const id = generateTripId(trip.district, trip.frvCode);
 
 	trip.tripId = id;
-
+	car.totalkm += kmdiff;
 	car.trip.push(trip._id);
 	await car.save();
 	await trip.save();
