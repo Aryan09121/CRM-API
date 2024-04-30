@@ -12,11 +12,11 @@ const invoiceSchema = new Schema({
 	},
 	trip: {
 		type: Schema.Types.ObjectId,
-		ref: "trip",
+		ref: "Trip",
 	},
 	car: {
 		type: Schema.Types.ObjectId,
-		ref: "car",
+		ref: "Car",
 	},
 	model: {
 		type: String,
@@ -57,6 +57,8 @@ const invoiceSchema = new Schema({
 	from: {
 		type: Date,
 	},
+	fromkm: Number,
+	tokm: Number,
 	to: {
 		type: Date,
 	},

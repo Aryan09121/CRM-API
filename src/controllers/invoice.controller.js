@@ -59,12 +59,14 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		model: trip.car.model,
 		dayQty: dayqty,
 		dayRate: trip.car.rate.date,
-		dayAmount: dayAmount,
+		dayAmount: dayAmount.toFixed(2),
 		kmQty: kmqty,
 		kmRate: trip.car.rate.km,
 		from: trip.start.date,
+		fromkm: trip.start.km,
+		tokm: end.km,
 		to: end.date,
-		kmAmount: kmAmount,
+		kmAmount: kmAmount.toFixed(2),
 		totalAmount: total,
 		offroad: trip.offroad,
 	});
@@ -309,4 +311,14 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 	});
 
 	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
+});
+
+exports.getIndividualInvoices = catchAsyncErrors(async (req, res) => {
+	const allInvoices = await Invoice.find().populate("owner trip car");
+
+	if (!allInvoices || allInvoices.length === 0) {
+		throw new ApiError(404, "No invoices found in the database.");
+	}
+
+	res.status(200).json(new ApiResponse(200, allInvoices, "All invoices retrieved successfully."));
 });
