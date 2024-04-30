@@ -29,8 +29,6 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	if (trip.status === "completed") {
 		throw new ApiError(404, "Trip already completed");
 	}
-	console.log(new Date().toISOString().split("T")[0]);
-	console.log(trip.generated.includes(new Date().toISOString().split("T")[0]));
 	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
 		console.log("hellow");
 		throw new ApiError(403, "Invoice already generated for today");
@@ -73,6 +71,11 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 
 	trip.generated.push(new Date().toISOString().split("T")[0]);
 
+	const car = await Car.findById(trip.car);
+	car.amount += Number(total);
+	car.totalkm = kmqty + car.start.km;
+	car.dayAmount += Number(dayAmount);
+	car.kmAmount += Number(kmAmount);
 	if (status === false) {
 		trip.status = "completed";
 		trip.start = {
@@ -80,16 +83,15 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 			km: trip.end.km,
 		};
 		trip.offroad = 0;
-
-		const car = await Car.findById(trip.car);
+		car.trip.pull(trip._id);
 	} else {
 		trip.start = {
 			date: trip.end.date,
 			km: trip.end.km,
 		};
-		trip.end = null;
 		trip.offroad = 0;
 	}
+	await car.save();
 	await trip.save();
 
 	res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));

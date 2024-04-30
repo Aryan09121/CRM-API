@@ -15,7 +15,7 @@ exports.getCars = catchAsyncErrors(async (req, res) => {
 exports.getSingleCar = catchAsyncErrors(async (req, res) => {
 	// const car = await Car.findById(req?.query?.id);
 	// const populatedCar = await car.populate("owner");
-	const car = await Car.findOne({ _id: req.query.id }).populate("owner");
+	const car = await Car.findOne({ _id: req.query.id }).populate("owner trip");
 	if (!car) {
 		throw new ApiError(404, "Car Not Found");
 	}
