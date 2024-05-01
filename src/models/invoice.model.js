@@ -54,6 +54,14 @@ const invoiceSchema = new Schema({
 		type: Number,
 		required: true,
 	},
+	gstAmount: {
+		type: Number,
+		required: true,
+	},
+	billAmount: {
+		type: Number,
+		required: true,
+	},
 	from: {
 		type: Date,
 	},
@@ -69,7 +77,7 @@ const invoiceSchema = new Schema({
 	status: {
 		type: String,
 		enum: ["paid", "pending", "unpaid"],
-		default: "pending",
+		default: "unpaid",
 	},
 });
 

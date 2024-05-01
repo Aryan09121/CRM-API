@@ -39,13 +39,15 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 
 	trip.end = end;
 	await trip.save();
-	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24));
+	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24)) + 1;
 	const kmqty = Math.ceil(trip.end.km - trip.start.km);
 
 	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
 	const kmAmount = kmqty * trip.car.rate.km;
 
-	const total = (dayAmount + kmAmount).toFixed(2);
+	const total = dayAmount + kmAmount;
+	const gstTotal = (total * 5) / 100;
+	const billTotal = (gstTotal + total).toFixed(2);
 
 	const invoiceId = generateInvoiceId(trip.car.model);
 
@@ -65,8 +67,10 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		tokm: end.km,
 		to: end.date,
 		kmAmount: kmAmount.toFixed(2),
-		totalAmount: total,
+		totalAmount: total.toFixed(2),
 		offroad: trip.offroad,
+		gstAmount: gstTotal.toFixed(2),
+		billAmount: billTotal,
 	});
 
 	trip.generated.push(new Date().toISOString().split("T")[0]);
@@ -256,6 +260,7 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 								invoiceDate: invoice.invoiceDate,
 								from: invoice.from,
 								to: invoice.to,
+								status: invoice.status,
 							},
 						],
 					},
@@ -287,6 +292,7 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 							invoiceDate: invoice.invoiceDate,
 							from: invoice.from,
 							to: invoice.to,
+							status: invoice.status,
 						},
 					],
 				});
@@ -307,12 +313,38 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 					invoiceDate: invoice.invoiceDate,
 					from: invoice.from,
 					to: invoice.to,
+					status: invoice.status,
 				});
 			}
 		}
 	});
 
 	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
+});
+
+exports.payInvoices = catchAsyncErrors(async (req, res) => {
+	const { id } = req.query;
+	const invoice = await Invoice.findById(id).populate("owner");
+
+	if (!invoice) {
+		throw new ApiError(404, "invoice not found in the database.");
+	}
+
+	invoice.status = "paid";
+	await invoice.save();
+
+	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
+});
+
+exports.getSingleInvoice = catchAsyncErrors(async (req, res) => {
+	const { id } = req.query;
+	const invoice = await Invoice.findById(id).populate("owner");
+
+	if (!invoice) {
+		throw new ApiError(404, "invoice not found in the database.");
+	}
+
+	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
 });
 
 exports.getIndividualInvoices = catchAsyncErrors(async (req, res) => {
