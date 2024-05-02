@@ -79,7 +79,7 @@ exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 // ?? Get All Owner Handler
 exports.getOwners = catchAsyncErrors(async (req, res) => {
 	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
-	const owners = await Owner.find();
+	const owners = await Owner.find().populate("invoices");
 	if (!owners) {
 		throw new ApiError(400, "Owners not Found");
 	}
