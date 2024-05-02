@@ -46,6 +46,7 @@ const ownerSchema = new Schema(
 				maxLength: [6, "Pincode should be  6 character long"],
 			},
 		},
+		invoices: [{ type: Schema.Types.ObjectId, ref: "Invoice" }],
 		socials: {
 			facebook: String,
 			twiiter: String,
