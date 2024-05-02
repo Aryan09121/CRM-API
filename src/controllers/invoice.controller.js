@@ -73,6 +73,16 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		billAmount: billTotal,
 	});
 
+	const owner = await Owner.findById(trip.car.owner);
+
+	if (!owner) {
+		// throw new ApiError(404, "Owner not found");
+		console.log("invoice is not added to owner because owner not found");
+	} else {
+		owner.invoices.push(invoice._id);
+		await owner.save();
+	}
+
 	trip.generated.push(new Date().toISOString().split("T")[0]);
 
 	const car = await Car.findById(trip.car);
@@ -338,7 +348,7 @@ exports.payInvoices = catchAsyncErrors(async (req, res) => {
 
 exports.getSingleInvoice = catchAsyncErrors(async (req, res) => {
 	const { id } = req.query;
-	const invoice = await Invoice.findById(id).populate("owner");
+	const invoice = await Invoice.findById(id).populate("owner car");
 
 	if (!invoice) {
 		throw new ApiError(404, "invoice not found in the database.");
