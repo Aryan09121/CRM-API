@@ -23,6 +23,7 @@ function generateInvoiceId(model) {
 exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const { tripId, status, end } = req.body;
 	const trip = await Trip.findOne({ tripId }).populate("car");
+
 	if (!trip) {
 		throw new ApiError(404, "Trip not found");
 	}
