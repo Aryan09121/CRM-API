@@ -57,6 +57,7 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 
 // ?? update trips
 exports.completeTrip = catchAsyncErrors(async (req, res) => {
+	const { end } = req.body;
 	const trip = Trip.findById(req.query.id);
 
 	if (!trip) {
@@ -72,6 +73,9 @@ exports.completeTrip = catchAsyncErrors(async (req, res) => {
 	if (trip.start.km > end.km) {
 		throw new ApiError(401, "end km is not greater than start km");
 	}
+
+	trip.end = end;
+	await trip.save();
 
 	trip.status = "completed";
 	trip.generated.push(new Date());
