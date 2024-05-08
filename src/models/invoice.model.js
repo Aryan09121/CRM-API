@@ -2,9 +2,21 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const invoiceSchema = new Schema({
+	invoiceId: {
+		type: String,
+		unique: true,
+	},
 	owner: {
 		type: Schema.Types.ObjectId,
-		ref: "owner", // Reference to the Owner model
+		ref: "owner",
+	},
+	trip: {
+		type: Schema.Types.ObjectId,
+		ref: "Trip",
+	},
+	car: {
+		type: Schema.Types.ObjectId,
+		ref: "Car",
 	},
 	model: {
 		type: String,
@@ -13,6 +25,10 @@ const invoiceSchema = new Schema({
 	dayQty: {
 		type: Number,
 		required: true,
+	},
+	offroad: {
+		type: Number,
+		default: 0,
 	},
 	dayRate: {
 		type: Number,
@@ -38,9 +54,30 @@ const invoiceSchema = new Schema({
 		type: Number,
 		required: true,
 	},
+	gstAmount: {
+		type: Number,
+		required: true,
+	},
+	billAmount: {
+		type: Number,
+		required: true,
+	},
+	from: {
+		type: Date,
+	},
+	fromkm: Number,
+	tokm: Number,
+	to: {
+		type: Date,
+	},
 	invoiceDate: {
 		type: Date,
 		default: Date.now,
+	},
+	status: {
+		type: String,
+		enum: ["paid", "pending", "unpaid"],
+		default: "unpaid",
 	},
 });
 

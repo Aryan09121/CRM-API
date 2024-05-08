@@ -11,6 +11,8 @@ const carSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		totalkm: { type: Number, default: 0 },
+		trip: [{ type: String, ref: "Trip" }],
 		brand: {
 			type: String,
 			required: true,
@@ -29,8 +31,34 @@ const carSchema = new Schema(
 			},
 		},
 		rate: {
-			day: {
+			date: {
 				type: Number,
+				min: 0,
+			},
+			km: {
+				type: Number,
+				min: 0,
+			},
+		},
+		amount: {
+			type: Number,
+			default: 0,
+		},
+		dayAmount: {
+			type: Number,
+			default: 0,
+		},
+		kmAmount: {
+			type: Number,
+			default: 0,
+		},
+		amountpaid: {
+			type: Number,
+			default: 200,
+		},
+		start: {
+			date: {
+				type: Date,
 				min: 0,
 			},
 			km: {
@@ -40,7 +68,7 @@ const carSchema = new Schema(
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
-			ref: "Owner", // Reference to the Owner model
+			ref: "owner", // Reference to the Owner model
 		},
 	},
 	{ timestamps: true }

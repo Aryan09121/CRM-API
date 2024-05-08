@@ -10,7 +10,7 @@ const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, avatar, phone: contact, gender, email, address, pan, joinedDate } = req.body;
+	const { name, avatar, phone: contact, gender, email, address, gst, pan, joinedDate } = req.body;
 	const carsData = req.body.cars; // Extract cars data from request body
 
 	if ([name, email, contact, gender, pan].some((field) => field === "")) {
@@ -26,6 +26,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const owner = await Owner.create({
 		name,
 		contact,
+		gst,
 		gender,
 		email,
 		avatar,
@@ -42,6 +43,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		// Create the car without owner reference
 		const singlecar = await Car.create({
 			...carData,
+			// totalkm: -carData.start.km,
 		});
 		if (!singlecar) {
 			throw new ApiError(500, "Something went wrong while registering the car");
@@ -77,7 +79,7 @@ exports.getOwnerById = catchAsyncErrors(async (req, res) => {
 // ?? Get All Owner Handler
 exports.getOwners = catchAsyncErrors(async (req, res) => {
 	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
-	const owners = await Owner.find();
+	const owners = await Owner.find().populate("invoices");
 	if (!owners) {
 		throw new ApiError(400, "Owners not Found");
 	}
