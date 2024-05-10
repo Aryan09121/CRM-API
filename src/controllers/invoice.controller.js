@@ -31,7 +31,7 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "Trip already completed");
 	}
 	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
-		console.log("hellow");
+		// console.log("hellow");
 		throw new ApiError(403, "Invoice already generated for today");
 	}
 	if (trip.start.km > end.km) {
@@ -78,7 +78,7 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 
 	if (!owner) {
 		// throw new ApiError(404, "Owner not found");
-		console.log("invoice is not added to owner because owner not found");
+		// console.log("invoice is not added to owner because owner not found");
 	} else {
 		owner.invoices.push(invoice._id);
 		await owner.save();
@@ -173,7 +173,7 @@ exports.generateInvoices = catchAsyncErrors(async (req, res) => {
 
 	const invoicePromises = [];
 	const generatedInvoices = [];
-	console.log("************************************************************************************************");
+	// console.log("************************************************************************************************");
 	for (const trip of trips) {
 		const car = trip.carDetails;
 		const carWithOwner = cars.find((c) => c._id.toString() === car._id.toString()); // Find the car from the populated cars array

@@ -91,7 +91,7 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 	const { name, email, contact, gender, address, socials } = req.body;
 
 	const owner = await Owner.findById(req?.query?.id);
-	console.log(!owner);
+	// console.log(!owner);
 	if (!owner) {
 		throw new ApiError(401, "Owner already exists");
 	}
@@ -168,7 +168,7 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 
 exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 	try {
-		console.log(req?.file);
+		// console.log(req?.file);
 
 		// Ensure req.file exists and has the necessary information
 		if (!req.file) {

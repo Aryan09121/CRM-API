@@ -3,6 +3,22 @@ const Car = require("../models/car.model");
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
+const Invoice = require("../models/invoice.model.js");
+const Owner = require("../models/owner.model.js");
+
+function generateInvoiceId(model) {
+	// Define character sets for readability
+	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+	// Generate a unique identifier
+	let uniqueIdentifier = "";
+	for (let i = 0; i < 5; i++) {
+		uniqueIdentifier += characters.charAt(Math.floor(Math.random() * characters.length));
+	}
+
+	// Combine prefix and unique identifier
+	return `${model.toUpperCase().substring(0, 3)}-${uniqueIdentifier}`;
+}
 
 // ?? get all trips
 exports.addTrip = catchAsyncErrors(async (req, res) => {
@@ -55,10 +71,44 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 });
 
+// ?? update offroad days
+exports.updateOffroad = catchAsyncErrors(async (req, res) => {
+	const { offroad } = req.body;
+	const trip = await Trip.findById(req.query.id).populate("car");
+	console.log("offroad = ", offroad);
+	if (!trip) {
+		throw new ApiError(404, "Trip not found!");
+	}
+	if (trip.status === "completed") {
+		throw new ApiError(404, "Trip already completed");
+	}
+
+	const startDate = new Date(trip.start.date);
+	for (const date of offroad.dates) {
+		console.log(date);
+		const currentDate = new Date(date);
+		if (currentDate >= startDate) {
+			// Check if date is already present in offroad_date
+			console.log(trip.offroad_date.includes(date));
+			if (!trip.offroad_date.includes(date.toString())) {
+				trip.offroad_date.push(date);
+				trip.offroad++;
+			}
+		}
+	}
+	await trip.save();
+
+	const date = await Trip.findById(req.query.id);
+	console.log("backend date = ", date.offroad_date);
+
+	res.status(201).json(new ApiResponse(200, {}, "offroad day added successfully."));
+});
+
 // ?? update trips
 exports.completeTrip = catchAsyncErrors(async (req, res) => {
 	const { end } = req.body;
-	const trip = Trip.findById(req.query.id);
+	const trip = await Trip.findById(req.query.id).populate("car");
+	// console.log(trip);
 
 	if (!trip) {
 		throw new ApiError(404, "Trip not found!");
@@ -67,8 +117,9 @@ exports.completeTrip = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "Trip already completed");
 	}
 	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
-		console.log("hellow");
-		throw new ApiError(403, "Invoice already generated for today");
+		trip.status = "completed";
+		await trip.save();
+		res.status(200).json(new ApiResponse(200, trip, "Trip completed successfully."));
 	}
 	if (trip.start.km > end.km) {
 		throw new ApiError(401, "end km is not greater than start km");
@@ -77,16 +128,78 @@ exports.completeTrip = catchAsyncErrors(async (req, res) => {
 	trip.end = end;
 	await trip.save();
 
-	trip.status = "completed";
-	trip.generated.push(new Date());
+	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24)) + 1;
+	const kmqty = Math.ceil(trip.end.km - trip.start.km);
 
-	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
+	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
+	const kmAmount = kmqty * trip.car.rate.km;
+
+	const total = dayAmount + kmAmount;
+	const gstTotal = (total * 5) / 100;
+	const billTotal = (gstTotal + total).toFixed(2);
+
+	const invoiceId = generateInvoiceId(trip.car.model);
+
+	const invoice = await Invoice.create({
+		owner: trip.car.owner,
+		trip: trip._id.toString(),
+		invoiceId,
+		car: trip.car._id,
+		model: trip.car.model,
+		dayQty: dayqty,
+		dayRate: trip.car.rate.date,
+		dayAmount: dayAmount.toFixed(2),
+		kmQty: kmqty,
+		kmRate: trip.car.rate.km,
+		from: trip.start.date,
+		fromkm: trip.start.km,
+		tokm: end.km,
+		to: end.date,
+		kmAmount: kmAmount.toFixed(2),
+		totalAmount: total.toFixed(2),
+		offroad: trip.offroad,
+		gstAmount: gstTotal.toFixed(2),
+		billAmount: billTotal,
+	});
+
+	const owner = await Owner.findById(trip.car.owner);
+
+	if (!owner) {
+		// throw new ApiError(404, "Owner not found");
+		// console.log("invoice is not added to owner because owner not found");
+	} else {
+		owner.invoices.push(invoice._id);
+		await owner.save();
+	}
+
+	trip.status = "completed";
+	trip.generated.push(new Date().toISOString().split("T")[0]);
+
+	const car = await Car.findById(trip.car);
+
+	car.amount += Number(total);
+	car.totalkm = kmqty + car.start.km;
+	car.dayAmount += Number(dayAmount);
+	car.kmAmount += Number(kmAmount);
+
+	trip.status = "completed";
+	trip.start = {
+		date: trip.end.date,
+		km: trip.end.km,
+	};
+	trip.offroad = 0;
+	car.trip.pull(trip._id);
+
+	await car.save();
+	await trip.save();
+
+	res.status(201).json(new ApiResponse(200, invoice, "Trip Completed successfully."));
 });
 
 // ?? get all trips
 exports.getAllTrips = catchAsyncErrors(async (req, res) => {
 	const trips = await Trip.find().populate("car");
-	console.log(trips);
+	// console.log(trips);
 
 	if (!trips || trips.length === 0) {
 		res.status(201).json(new ApiResponse(200, [], "no trips found."));

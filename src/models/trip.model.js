@@ -38,6 +38,11 @@ const tripSchema = new Schema(
 			type: Number,
 			default: 0,
 		},
+		offroad_date: [
+			{
+				type: Date,
+			},
+		],
 		end: {
 			date: {
 				type: Date,
