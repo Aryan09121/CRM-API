@@ -1,2 +1,2 @@
 exports.DB_NAME = "crm";
-exports.setting = "66431e1f3c0c65b84d71f962";
+exports.setting = "6647393f69fc60d46c5a4f85";
