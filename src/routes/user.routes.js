@@ -6,21 +6,6 @@ const { authUser } = require("../middlewares/auth.middleware.js");
 
 const router = Router();
 
-// TODO: using multer during owner and admin photo upload
-// router.route("/register").post(
-// 	upload.fields([
-// 		{
-// 			name: "avatar",
-// 			maxCount: 1,
-// 		},
-// 		{
-// 			name: "coverImage",
-// 			maxCount: 1,
-// 		},
-// 	]),
-// 	registerUser
-// );
-
 // !! public routes --------------------------------
 router.route("/login").post(loginAdmin);
 

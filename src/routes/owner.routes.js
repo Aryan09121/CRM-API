@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { getOwnerById, addNewOwner, getOwners, onwerAvatar, updateOwnerDetails } = require("../controllers/owner.controller.js");
+const { getOwnerById, addNewOwner, getOwners, onwerAvatar, updateOwnerDetails, updateRate } = require("../controllers/owner.controller.js");
 const { authUser } = require("../middlewares/auth.middleware.js");
 const multer = require("multer");
 const { ApiError } = require("../utils/ApiError.js");
@@ -35,6 +35,7 @@ const upload = multer({ storage: storage });
 router.route("/owners").get(authUser, getOwners);
 router.route("/owner").get(authUser, getOwnerById);
 router.route("/add/owner").post(authUser, addNewOwner);
+router.route("/owner/edit/rate").post(authUser, updateRate);
 // router.route("/add/owner/avatar").Upload.single('avatar').post(authUser, onwerAvatar);
 router.post("/add/owner/avatar", upload.single("avatar"), authUser, onwerAvatar);
 

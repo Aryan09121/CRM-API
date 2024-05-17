@@ -10,6 +10,11 @@ const invoiceSchema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: "owner",
 	},
+	company: {
+		type: Schema.Types.ObjectId,
+		ref: "company", // Reference to the Company model
+		unique: false, // Set to false to allow multiple trips for the same company
+	},
 	trip: {
 		type: Schema.Types.ObjectId,
 		ref: "Trip",

@@ -40,6 +40,9 @@ const carSchema = new Schema(
 				min: 0,
 			},
 		},
+		rent: {
+			type: Number,
+		},
 		amount: {
 			type: Number,
 			default: 0,
@@ -54,7 +57,7 @@ const carSchema = new Schema(
 		},
 		amountpaid: {
 			type: Number,
-			default: 200,
+			default: 0,
 		},
 		start: {
 			date: {
