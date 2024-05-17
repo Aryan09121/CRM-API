@@ -6,11 +6,11 @@ const multer = require("multer");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const path = require("path");
-const imagekit = require("../utils/imagekit.js").initImageKit();
+// const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, avatar, phone: contact, gender, email, address, gst, pan, joinedDate } = req.body;
+	const { name, avatar, phone: contact, gender, email, address, gst, pan, joinedDate, hsn } = req.body;
 	const carsData = req.body.cars; // Extract cars data from request body
 
 	if ([name, email, contact, gender, pan].some((field) => field === "")) {
@@ -32,11 +32,11 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		avatar,
 		address,
 		pan,
+		hsn,
 		joinedDate: joinedDate || Date.now(),
 	});
 
 	// Create an array to store created car documents
-	const createdCars = [];
 
 	// Loop through each car data and create the car associated with the owner
 	for (const carData of carsData) {
@@ -53,7 +53,6 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 		// Update the created car to include a reference to the owner
 		singlecar.owner = owner._id;
 		await singlecar.save(); // Save the updated car
-		createdCars.push(singlecar);
 	}
 
 	// Fetch the owner document along with the populated cars
@@ -68,12 +67,29 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 
 // ?? Get Single Owner Handler
 exports.getOwnerById = catchAsyncErrors(async (req, res) => {
-	// TODO: req.params.id is giving undefined . need to solve the issue by asking sir
-	const owner = await Owner.findById(req.query.id).populate("cars");
+	// TODO: req.params.id is giving undefined. need to solve the issue by asking sir
+	const owner = await Owner.findById(req.query.id).populate("cars invoices");
 	if (!owner) {
 		throw new ApiError(400, "Owner Details not Found");
 	}
+
 	return res.status(200).json(new ApiResponse(200, owner, "Owner Details Fetched Successfully"));
+});
+
+exports.updateRate = catchAsyncErrors(async (req, res) => {
+	const { day } = req.body;
+	const car = await Car.findById(req.query.id);
+	if (!car) {
+		throw new ApiError(400, "Car not Found");
+	}
+
+	if (day) {
+		car.rent = day;
+	}
+
+	await car.save();
+
+	return res.status(200).json(new ApiResponse(200, {}, "Car rent updated Successfully"));
 });
 
 // ?? Get All Owner Handler
@@ -91,7 +107,7 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 	const { name, email, contact, gender, address, socials } = req.body;
 
 	const owner = await Owner.findById(req?.query?.id);
-	console.log(!owner);
+	// console.log(!owner);
 	if (!owner) {
 		throw new ApiError(401, "Owner already exists");
 	}
@@ -168,7 +184,7 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 
 exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 	try {
-		console.log(req?.file);
+		// console.log(req?.file);
 
 		// Ensure req.file exists and has the necessary information
 		if (!req.file) {

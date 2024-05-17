@@ -8,6 +8,11 @@ const tripSchema = new Schema(
 			ref: "Car", // Reference to the Car model
 			unique: false, // Set to false to allow multiple trips for the same car
 		},
+		company: {
+			type: Schema.Types.ObjectId,
+			ref: "Company", // Reference to the Company model
+			unique: false, // Set to false to allow multiple trips for the same company
+		},
 		tripId: {
 			type: String,
 			unique: true, // Ensure uniqueness of tripId across all trips
@@ -38,6 +43,11 @@ const tripSchema = new Schema(
 			type: Number,
 			default: 0,
 		},
+		offroad_date: [
+			{
+				type: Date,
+			},
+		],
 		end: {
 			date: {
 				type: Date,

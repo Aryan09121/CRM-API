@@ -46,6 +46,51 @@ const ownerSchema = new Schema(
 				maxLength: [6, "Pincode should be  6 character long"],
 			},
 		},
+		bills: [
+			{
+				model: String,
+				invoices: [
+					{
+						start: Date,
+						end: Date,
+						days: Number,
+						offroad: Number,
+						car: {
+							type: Schema.Types.ObjectId,
+							ref: "Car",
+						},
+						rent: Number,
+						amount: Number,
+						totalAmount: Number,
+					},
+				],
+			},
+		],
+		paid: [
+			{
+				bills: [
+					{
+						model: String,
+						invoices: [
+							{
+								start: Date,
+								end: Date,
+								days: Number,
+								offroad: Number,
+								car: {
+									type: Schema.Types.ObjectId,
+									ref: "Car",
+								},
+								rent: Number,
+								amount: Number,
+								totalAmount: Number,
+							},
+						],
+					},
+				],
+				transaction: String,
+			},
+		],
 		invoices: [{ type: Schema.Types.ObjectId, ref: "Invoice" }],
 		socials: {
 			facebook: String,

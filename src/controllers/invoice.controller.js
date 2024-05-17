@@ -1,6 +1,7 @@
 const Invoice = require("../models/invoice.model.js");
 const Car = require("../models/car.model");
 const Trip = require("../models/trip.model");
+const Setting = require("../models/settings.model");
 const Owner = require("../models/owner.model");
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
@@ -31,29 +32,36 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "Trip already completed");
 	}
 	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
-		console.log("hellow");
+		// console.log("hellow");
 		throw new ApiError(403, "Invoice already generated for today");
 	}
 	if (trip.start.km > end.km) {
 		throw new ApiError(401, "end km is not greater than start km");
 	}
 
-	trip.end = end;
+	trip.end = {
+		date: end.date || new Date(),
+		km: end.km,
+	};
+
 	await trip.save();
+	const gst = await Setting.findOne();
 	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24)) + 1;
 	const kmqty = Math.ceil(trip.end.km - trip.start.km);
+	console.log(dayqty);
 
 	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
 	const kmAmount = kmqty * trip.car.rate.km;
 
 	const total = dayAmount + kmAmount;
-	const gstTotal = (total * 5) / 100;
+	const gstTotal = (total * gst.gstValue) / 100;
 	const billTotal = (gstTotal + total).toFixed(2);
 
 	const invoiceId = generateInvoiceId(trip.car.model);
 
 	const invoice = await Invoice.create({
 		owner: trip.car.owner,
+		company: trip.company,
 		trip: trip._id.toString(),
 		invoiceId,
 		car: trip.car._id,
@@ -77,10 +85,41 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const owner = await Owner.findById(trip.car.owner);
 
 	if (!owner) {
-		// throw new ApiError(404, "Owner not found");
-		console.log("invoice is not added to owner because owner not found");
 	} else {
 		owner.invoices.push(invoice._id);
+
+		const inv = {
+			start: invoice.from,
+			end: invoice.to,
+			car: invoice.car,
+			rent: trip.car.rent,
+			offroad: invoice.offroad,
+			days: dayqty,
+			amount: dayqty * trip.car.rent,
+			invoiceDate: invoice.invoiceDate,
+			_id: invoice._id,
+		};
+
+		// Check if bills array is empty
+		if (owner.bills.length === 0) {
+			owner.bills.push({ model: trip.car.model, invoices: [] });
+		}
+
+		let billFound = false;
+		// Iterate through bills array
+		for (let i = 0; i < owner.bills.length; i++) {
+			if (owner.bills[i].model === invoice.model) {
+				owner.bills[i].invoices.push(inv);
+				billFound = true;
+				break; // No need to continue the loop once the bill is found and updated
+			}
+		}
+
+		// If bill with model not found, create a new one
+		if (!billFound) {
+			owner.bills.push({ model: trip.car.model, invoices: [inv] });
+		}
+
 		await owner.save();
 	}
 
@@ -112,129 +151,8 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));
 });
 
-exports.generateInvoices = catchAsyncErrors(async (req, res) => {
-	const currentDate = new Date();
-	// TODO: need to change === to !== as invoice is only generated on the 1st of every month
-	// if (currentDate.getDate() === 1) {
-	// 	throw new ApiError(403, "Invoices can only be generated on the 1st day of the month.");
-	// }
-
-	const cars = await Car.find().populate("owner"); // Populate the owner field in the Car document
-	if (!cars || cars.length === 0) {
-		throw new ApiError(404, "No cars found.");
-	}
-
-	const trips = await Trip.aggregate([
-		{
-			$match: {
-				generated: {
-					$not: {
-						$elemMatch: {
-							invoiceGenerationMonth: { $eq: currentDate.getMonth() },
-						},
-					},
-				},
-				status: "ongoing",
-			},
-		},
-		{
-			$lookup: {
-				from: "cars",
-				localField: "car",
-				foreignField: "_id",
-				as: "carDetails",
-			},
-		},
-		{ $unwind: "$carDetails" }, // Deconstruct the carDetails array
-		{
-			$lookup: {
-				from: "owners",
-				localField: "carDetails.owner",
-				foreignField: "_id",
-				as: "ownerDetails",
-			},
-		},
-		{ $unwind: "$ownerDetails" }, // Deconstruct the ownerDetails array
-	]);
-
-	// console.log(trips);
-
-	if (!trips || trips.length === 0) {
-		throw new ApiError(404, "No trips found to generate invoices.");
-	}
-
-	const { end } = req.body;
-
-	if (!end || end.length === 0) {
-		throw new ApiError(400, "End kilometers are required.");
-	}
-
-	const endMap = new Map(end.map(({ email, km }) => [email, km]));
-
-	const invoicePromises = [];
-	const generatedInvoices = [];
-	console.log("************************************************************************************************");
-	for (const trip of trips) {
-		const car = trip.carDetails;
-		const carWithOwner = cars.find((c) => c._id.toString() === car._id.toString()); // Find the car from the populated cars array
-		if (!carWithOwner) {
-			throw new ApiError(404, "Car not found.");
-		}
-		const owner = carWithOwner.owner; // Access owner from the car document
-		const model = car.model;
-		const days = Math.ceil((currentDate - trip.start.date) / (1000 * 60 * 60 * 24));
-		const endKm = endMap.get(owner.email); // Get the end kilometer for the respective owner
-
-		if (!endKm) {
-			throw new ApiError(400, `End kilometer not provided for owner with email ${owner.email}.`);
-		}
-		// console.log("car", car);
-		const dayAmount = days * car.rate.date;
-		const kmAmount = (endKm - trip.start.km) * car.rate.km; // Calculate kilometers based on end kilometer
-		const totalAmount = dayAmount + kmAmount;
-
-		const tripDocument = await Trip.findById(trip._id);
-		if (!tripDocument) {
-			throw new ApiError(404, "Trip not found.");
-		}
-
-		tripDocument.end = {
-			date: currentDate,
-			km: endKm,
-		};
-
-		await tripDocument.save();
-
-		const newInvoice = new Invoice({
-			owner: owner,
-			trip: trip._id,
-			model: model,
-			dayQty: days,
-			dayRate: car.rate.date,
-			dayAmount: dayAmount,
-			kmQty: endKm - trip.start.km, // Calculate kilometers difference
-			kmRate: car.rate.km,
-			kmAmount: kmAmount,
-			totalAmount: totalAmount,
-		});
-
-		await newInvoice.save(); // Wait for the invoice to be saved before pushing to the array
-		generatedInvoices.push(newInvoice.toObject());
-
-		// Update car's kilometers
-		carWithOwner.currentKm = endKm;
-		await carWithOwner.save();
-	}
-
-	// Mark trips as invoiced
-	const tripIds = trips.map((trip) => trip._id);
-	await Trip.updateMany({ _id: { $in: tripIds } }, { $push: { generated: currentDate } });
-
-	res.status(201).json(new ApiResponse(200, generatedInvoices, "Invoices generated successfully."));
-});
-
 exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
-	const allInvoices = await Invoice.find().populate("owner");
+	const allInvoices = await Invoice.find().populate("owner company");
 
 	if (!allInvoices || allInvoices.length === 0) {
 		throw new ApiError(404, "No invoices found in the database.");
@@ -243,21 +161,25 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 	const formattedInvoices = [];
 
 	allInvoices.forEach((invoice) => {
+		// console.log(invoice);
 		// Check if the owner is already present in formattedInvoices
-		const ownerIndex = formattedInvoices.findIndex((ownerInvoices) => {
-			return ownerInvoices.owner._id.toString() === invoice.owner._id.toString();
+		const companyIndex = formattedInvoices.findIndex((companyInvoices) => {
+			// console.log(companyInvoices.company);
+			// console.log("invoice =", invoice.company);
+			return companyInvoices.company?._id.toString() === invoice?.company?._id?.toString();
 		});
 
-		// If owner is not present, add the owner along with the current invoice
-		if (ownerIndex === -1) {
+		// If company is not present, then add the company along with the current invoice
+		if (companyIndex === -1) {
 			formattedInvoices.push({
+				company: invoice.company,
 				owner: invoice.owner,
 				invoices: [
 					{
 						model: invoice.model,
 						invoice: [
 							{
-								_id: invoice._id,
+								_id: invoice?._id,
 								invoiceId: invoice.invoiceId,
 								model: invoice.model,
 								dayQty: invoice.dayQty,
@@ -279,17 +201,17 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 			});
 		} else {
 			// If owner is already present, find the model index
-			const modelIndex = formattedInvoices[ownerIndex].invoices.findIndex((inv) => {
+			const modelIndex = formattedInvoices[companyIndex].invoices.findIndex((inv) => {
 				return inv.model === invoice.model;
 			});
 
 			// If model is not present, add the model along with the current invoice
 			if (modelIndex === -1) {
-				formattedInvoices[ownerIndex].invoices.push({
+				formattedInvoices[companyIndex].invoices.push({
 					model: invoice.model,
 					invoice: [
 						{
-							_id: invoice._id,
+							_id: invoice?._id,
 							invoiceId: invoice.invoiceId,
 							model: invoice.model,
 							dayQty: invoice.dayQty,
@@ -309,8 +231,8 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 				});
 			} else {
 				// If model is already present, add the current invoice
-				formattedInvoices[ownerIndex].invoices[modelIndex].invoice.push({
-					_id: invoice._id,
+				formattedInvoices[companyIndex].invoices[modelIndex].invoice.push({
+					_id: invoice?._id,
 					invoiceId: invoice.invoiceId,
 					model: invoice.model,
 					dayQty: invoice.dayQty,
@@ -333,6 +255,120 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
 });
 
+exports.getAllOwnerInvoices = catchAsyncErrors(async (req, res) => {
+	const allInvoices = await Invoice.find().populate("owner company");
+
+	if (!allInvoices || allInvoices.length === 0) {
+		throw new ApiError(404, "No invoices found in the database.");
+	}
+	// Create an empty array to store formatted invoices
+	const formattedInvoices = [];
+
+	allInvoices.forEach((invoice) => {
+		// console.log(invoice);
+		// Check if the owner is already present in formattedInvoices
+		const companyIndex = formattedInvoices.findIndex((companyInvoices) => {
+			// console.log(companyInvoices.company);
+			// console.log("invoice =", invoice.company);
+			return companyInvoices.owner?._id.toString() === invoice?.owner?._id?.toString();
+		});
+
+		// If company is not present, then add the company along with the current invoice
+		if (companyIndex === -1) {
+			formattedInvoices.push({
+				company: invoice.company,
+				owner: invoice.owner,
+				invoices: [
+					{
+						model: invoice.model,
+						invoice: [
+							{
+								_id: invoice?._id,
+								invoiceId: invoice.invoiceId,
+								model: invoice.model,
+								dayQty: invoice.dayQty,
+								dayRate: invoice.dayRate,
+								dayAmount: invoice.dayAmount,
+								kmQty: invoice.kmQty,
+								offroad: invoice.offroad,
+								kmRate: invoice.kmRate,
+								kmAmount: invoice.kmAmount,
+								totalAmount: invoice.totalAmount,
+								invoiceDate: invoice.invoiceDate,
+								from: invoice.from,
+								to: invoice.to,
+								status: invoice.status,
+							},
+						],
+					},
+				],
+			});
+		} else {
+			// If owner is already present, find the model index
+			const modelIndex = formattedInvoices[companyIndex].invoices.findIndex((inv) => {
+				return inv.model === invoice.model;
+			});
+
+			// If model is not present, add the model along with the current invoice
+			if (modelIndex === -1) {
+				formattedInvoices[companyIndex].invoices.push({
+					model: invoice.model,
+					invoice: [
+						{
+							_id: invoice?._id,
+							invoiceId: invoice.invoiceId,
+							model: invoice.model,
+							dayQty: invoice.dayQty,
+							dayRate: invoice.dayRate,
+							offroad: invoice.offroad,
+							dayAmount: invoice.dayAmount,
+							kmQty: invoice.kmQty,
+							kmRate: invoice.kmRate,
+							kmAmount: invoice.kmAmount,
+							totalAmount: invoice.totalAmount,
+							invoiceDate: invoice.invoiceDate,
+							from: invoice.from,
+							to: invoice.to,
+							status: invoice.status,
+						},
+					],
+				});
+			} else {
+				// If model is already present, add the current invoice
+				formattedInvoices[companyIndex].invoices[modelIndex].invoice.push({
+					_id: invoice?._id,
+					invoiceId: invoice.invoiceId,
+					model: invoice.model,
+					dayQty: invoice.dayQty,
+					dayRate: invoice.dayRate,
+					dayAmount: invoice.dayAmount,
+					kmQty: invoice.kmQty,
+					kmRate: invoice.kmRate,
+					kmAmount: invoice.kmAmount,
+					offroad: invoice.offroad,
+					totalAmount: invoice.totalAmount,
+					invoiceDate: invoice.invoiceDate,
+					from: invoice.from,
+					to: invoice.to,
+					status: invoice.status,
+				});
+			}
+		}
+	});
+
+	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
+});
+
+exports.getVendorsInvoices = catchAsyncErrors(async (req, res) => {
+	const allInvoices = await Invoice.find().populate("owner company car trip");
+
+	if (!allInvoices || allInvoices.length === 0) {
+		throw new ApiError(404, "No invoices found in the database.");
+	}
+
+	res.status(200).json(new ApiResponse(200, allInvoices, "All invoices retrieved successfully."));
+});
+
 exports.payInvoices = catchAsyncErrors(async (req, res) => {
 	const { id } = req.query;
 	const invoice = await Invoice.findById(id).populate("owner");
@@ -347,9 +383,41 @@ exports.payInvoices = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
 });
 
+// ?? payOwnerBill
+exports.payOwnerBill = catchAsyncErrors(async (req, res) => {
+	const { transaction } = req.body;
+	const { id } = req.query;
+	const owner = await Owner.findById(id);
+
+	if (!owner) {
+		throw new ApiError(404, "Owner not found in the database.");
+	}
+
+	if (owner.bills.length === 0) {
+		throw new ApiError(404, "No bills to pay.");
+	}
+
+	// let arr = [];
+	// Loop through each bill and push it individually into the paid array
+	// owner.bills.forEach((bill) => {
+	// 	console.log(bill);
+	// 	arr.push(bill);
+	// });
+
+	// console.log(arr);
+	owner.paid.push({ transaction, bills: owner.bills });
+
+	// Clear the bills array
+	owner.bills = [];
+
+	await owner.save();
+
+	res.status(200).json(new ApiResponse(200, {}, "Owner Payment Successful"));
+});
+
 exports.getSingleInvoice = catchAsyncErrors(async (req, res) => {
 	const { id } = req.query;
-	const invoice = await Invoice.findById(id).populate("owner car");
+	const invoice = await Invoice.findById(id).populate("owner company car");
 
 	if (!invoice) {
 		throw new ApiError(404, "invoice not found in the database.");
@@ -359,7 +427,7 @@ exports.getSingleInvoice = catchAsyncErrors(async (req, res) => {
 });
 
 exports.getIndividualInvoices = catchAsyncErrors(async (req, res) => {
-	const allInvoices = await Invoice.find().populate("owner trip car");
+	const allInvoices = await Invoice.find().populate("owner company trip car");
 
 	if (!allInvoices || allInvoices.length === 0) {
 		throw new ApiError(404, "No invoices found in the database.");

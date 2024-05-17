@@ -27,9 +27,9 @@ exports.getSingleCar = catchAsyncErrors(async (req, res) => {
 });
 
 exports.getBrandCarBrandsByOwnerId = catchAsyncErrors(async (req, res) => {
-	console.log(req.body);
+	// console.log(req.body);
 	const param = req.query.param;
-	console.log(param);
+	// console.log(param);
 	// Check if the search parameter is provided
 	if (!param) {
 		throw new ApiError(400, "Missing search parameter");
@@ -57,7 +57,7 @@ exports.getBrandCarBrandsByOwnerId = catchAsyncErrors(async (req, res) => {
 
 exports.getCarsByownerId = catchAsyncErrors(async (req, res) => {
 	const ownerId = req?.params?.id;
-	console.log(ownerId);
+	// console.log(ownerId);
 	const cars = await Car.find({ owner: ownerId });
 	if (!cars || cars.length === 0) {
 		throw new ApiError(404, "Cars Not Found");
