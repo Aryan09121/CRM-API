@@ -17,6 +17,9 @@ exports.updateGstValue = catchAsyncErrors(async (req, res) => {
 
 exports.getGstValue = catchAsyncErrors(async (req, res) => {
 	const setting = await Setting.findById(setid);
+	if (!setting) {
+		throw new ApiError(404, "Setting Not Found");
+	}
 
 	res.status(200).json(new ApiResponse(200, setting.gstValue, "Gst Value updated successfully"));
 });
