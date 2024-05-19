@@ -11,7 +11,7 @@ class MailSender {
 	attachment;
 	billDetails;
 
-	constructor(to, sub, msg, attachment, billDetails) {
+	constructor(to, sub, msg, billDetails, attachment) {
 		this.mailfrom = "rajkm9111@gmail.com";
 		this.tomail = to;
 		this.sub = sub;

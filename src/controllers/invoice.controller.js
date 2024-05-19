@@ -48,7 +48,6 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const gst = await Setting.findOne();
 	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24)) + 1;
 	const kmqty = Math.ceil(trip.end.km - trip.start.km);
-	console.log(dayqty);
 
 	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
 	const kmAmount = kmqty * trip.car.rate.km;
