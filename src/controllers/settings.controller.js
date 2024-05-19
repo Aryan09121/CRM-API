@@ -4,6 +4,7 @@ const Car = require("../models/car.model.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const { setting: setid } = require("../constants.js");
+const MailSender = require("../utils/Nodemailer.js");
 
 exports.updateGstValue = catchAsyncErrors(async (req, res) => {
 	const { gstValue } = req.body;
