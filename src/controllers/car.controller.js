@@ -4,6 +4,27 @@ const Car = require("../models/car.model.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
+exports.addCar = catchAsyncErrors(async (req, res) => {
+	const { brand, model, registrationNo, rent, start } = req.body;
+
+	if (!brand || !model || !registrationNo || !rent || !start.date || !start.km) {
+		throw new ApiError(400, "All fields are required");
+	}
+	const car = await Car.create({
+		model,
+		registrationNo,
+		brand,
+		rent,
+		start,
+		owner: req.query.id,
+	});
+
+	if (!car) {
+		throw new ApiError(404, "cars Not Added!");
+	}
+	res.status(200).json(new ApiResponse(200, car, "cars fetched successfully"));
+});
+
 exports.getCars = catchAsyncErrors(async (req, res) => {
 	const cars = await Car.find().populate("trip");
 	if (!cars) {
