@@ -5,7 +5,7 @@ const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 
 exports.addCar = catchAsyncErrors(async (req, res) => {
-	const { brand, model, registrationNo, rent, start } = req.body;
+	const { brand, model, registrationNo, rent, start } = req.body.car;
 
 	console.log(brand, model, registrationNo, rent, start);
 	if (!brand || !model || !registrationNo || !rent || !start.date || !start.km) {
