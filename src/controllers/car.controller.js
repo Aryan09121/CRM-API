@@ -23,7 +23,7 @@ exports.addCar = catchAsyncErrors(async (req, res) => {
 	if (!car) {
 		throw new ApiError(404, "cars Not Added!");
 	}
-	res.status(200).json(new ApiResponse(200, {}, "cars fetched successfully"));
+	res.status(200).json(new ApiResponse(200, {}, "car added successfully"));
 });
 
 exports.getCars = catchAsyncErrors(async (req, res) => {
