@@ -44,9 +44,9 @@ exports.updateDayRate = catchAsyncErrors(async (req, res) => {
 
 exports.sendPdf = catchAsyncErrors(async (req, res) => {
 	const { email } = req.body;
-	// const pdfFile = req.files.pdfFile;
 
 	const mailSender = new MailSender(email, "Invoice", "Attached is your invoice.", "Bill details here");
+
 	mailSender.send();
 
 	res.status(200).json({ message: "Invoice sent successfully" });
