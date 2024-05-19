@@ -16,7 +16,6 @@ class MailSender {
 		this.tomail = to;
 		this.sub = sub;
 		this.message = msg;
-		this.attachment = attachment;
 		this.billDetails = billDetails; // Bill details to be included in the email body
 		this.nodemailer = nodemailer;
 		this.gmail = this.nodemailer.createTransport({
@@ -39,12 +38,6 @@ class MailSender {
 			to: this.tomail,
 			subject: this.sub,
 			html: `${this.message}<br><br>Bill Details: ${this.billDetails}`, // Include bill details in the email body
-			attachments: [
-				{
-					filename: "Invoice.pdf", // Name of the attached file
-					content: fs.createReadStream(this.attachment), // Read the PDF file and attach it
-				},
-			],
 		};
 
 		this.gmail.sendMail(mailOptions, function (error, info) {
