@@ -190,6 +190,7 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 								kmAmount: invoice.kmAmount,
 								totalAmount: invoice.totalAmount,
 								invoiceDate: invoice.invoiceDate,
+								car: invoice.car,
 								from: invoice.from,
 								to: invoice.to,
 								status: invoice.status,
