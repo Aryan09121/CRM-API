@@ -43,9 +43,49 @@ exports.updateDayRate = catchAsyncErrors(async (req, res) => {
 });
 
 exports.sendPdf = catchAsyncErrors(async (req, res) => {
-	const { email } = req.body;
+	const { email, invoices } = req.body;
 
-	const mailSender = new MailSender(email, "Invoice", "Attached is your invoice.", "Bill details here");
+	// Construct the HTML email body with invoice details
+	let emailBody = `
+		<h1>Bill Details 💵💸</h1>
+		<p>Dear Customer,</p>
+		<p>Attached is your Bill Details for the month of February 2024.</p>
+		<p>Below are the invoice details:</p>
+		<table border="1">
+	   	 <thead>
+		 	  <tr>
+			 	 <th>Model</th>
+			 	 <th>Count</th>
+				  <th>Period From</th>
+				  <th>Period To</th>
+				  <th>Total Day Qty</th>
+				  <th>Total Day Amount</th>
+			   </tr>
+	   	 </thead>
+	    <tbody>
+	 `;
+
+	invoices.forEach((invoice) => {
+		emailBody += `
+	    <tr>
+		   <td>${invoice.model}</td>
+		   <td>${invoice.count}</td>
+		   <td>${invoice.periodFrom}</td>
+		   <td>${invoice.periodTo}</td>
+		   <td>${invoice.totalDayQty}</td>
+		   <td>${invoice.totalDayAmount}</td>
+	    </tr>
+	`;
+	});
+
+	emailBody += `
+	    </tbody>
+	</table>
+ `;
+
+	emailBody += `<p>Thank you for your business.</p>`;
+
+	const mailSender = new MailSender(email, "Bill Details 💵💸", "Attached is your Bill Details For the month of Febuary 2024.", emailBody);
 
 	mailSender.send();
 
