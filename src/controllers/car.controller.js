@@ -7,6 +7,7 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 exports.addCar = catchAsyncErrors(async (req, res) => {
 	const { brand, model, registrationNo, rent, start } = req.body;
 
+	console.log(brand, model, registrationNo, rent, start);
 	if (!brand || !model || !registrationNo || !rent || !start.date || !start.km) {
 		throw new ApiError(400, "All fields are required");
 	}
