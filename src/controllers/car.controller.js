@@ -11,6 +11,11 @@ exports.addCar = catchAsyncErrors(async (req, res) => {
 	if (!brand || !model || !registrationNo || !rent || !start.date || !start.km) {
 		throw new ApiError(400, "All fields are required");
 	}
+	const owner = await Owner.findById(req.query.id);
+	if (!owner) {
+		throw new ApiError(404, "Owner Not Found");
+	}
+
 	const car = await Car.create({
 		model,
 		registrationNo,
@@ -23,6 +28,10 @@ exports.addCar = catchAsyncErrors(async (req, res) => {
 	if (!car) {
 		throw new ApiError(404, "cars Not Added!");
 	}
+
+	owner.cars.push(car._id);
+	await owner.save();
+
 	res.status(200).json(new ApiResponse(200, {}, "car added successfully"));
 });
 
