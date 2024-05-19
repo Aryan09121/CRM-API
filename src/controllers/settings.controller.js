@@ -64,8 +64,8 @@ exports.sendPdf = catchAsyncErrors(async (req, res) => {
 	   	 </thead>
 	    <tbody>
 	 `;
-
-	invoices.forEach((invoice) => {
+	console.log(invoices);
+	invoices?.forEach((invoice) => {
 		emailBody += `
 	    <tr>
 		   <td>${invoice.model}</td>
