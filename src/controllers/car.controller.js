@@ -7,8 +7,22 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 exports.addCar = catchAsyncErrors(async (req, res) => {
 	const data = req.body;
 
-	console.log(data);
+	const { brand, model, registrationNo, rent, start } = data;
+	if (!brand || !model || !registrationNo || !rent || !start.date || !start.km) {
+		throw new ApiError(400, "All fields are required");
+	}
+	const car = await Car.create({
+		model,
+		registrationNo,
+		brand,
+		rent,
+		start,
+		owner: req.query.id,
+	});
 
+	if (!car) {
+		throw new ApiError(404, "cars Not Added!");
+	}
 	res.status(200).json(new ApiResponse(200, {}, "cars fetched successfully"));
 });
 
