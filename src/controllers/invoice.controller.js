@@ -382,6 +382,26 @@ exports.payInvoices = catchAsyncErrors(async (req, res) => {
 
 	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
 });
+// ?? pay all invoices
+exports.payAllInvoices = catchAsyncErrors(async (req, res) => {
+	const { ids } = req.body; // Assuming the IDs are sent in the body as an array
+
+	if (!Array.isArray(ids) || ids.length === 0) {
+		throw new ApiError(400, "No invoice IDs provided or invalid format.");
+	}
+
+	const invoices = await Invoice.updateMany(
+		{ _id: { $in: ids } },
+		{ $set: { status: "paid" } },
+		{ multi: true } // Ensure multiple documents are updated
+	);
+
+	if (invoices.nModified === 0) {
+		throw new ApiError(404, "No invoices found or all invoices are already paid.");
+	}
+
+	res.status(200).json(new ApiResponse(200, {}, "Invoices Payment Successful"));
+});
 
 // ?? payOwnerBill
 exports.payOwnerBill = catchAsyncErrors(async (req, res) => {
