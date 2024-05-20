@@ -116,7 +116,7 @@ exports.sendPdf = catchAsyncErrors(async (req, res) => {
 
 	mailSender.send();
 
-	res.status(200).json({ message: "Invoice sent successfully" });
+	res.status(200).json({ message: "Email sent successfully" });
 });
 
 exports.updateKmRate = catchAsyncErrors(async (req, res) => {
