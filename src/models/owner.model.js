@@ -102,9 +102,9 @@ const ownerSchema = new Schema(
 			unique: [true, "gst no should be unique"],
 			required: true,
 		},
-		gst: {
+		aadhar: {
 			type: String,
-			unique: [true, "gst no should be unique"],
+			unique: [true, "aadhar no should be unique"],
 		},
 		hsn: {
 			type: String,

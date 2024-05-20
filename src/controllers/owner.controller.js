@@ -10,7 +10,7 @@ const path = require("path");
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
-	const { name, avatar, phone: contact, gender, email, address, gst, pan, joinedDate, hsn } = req.body;
+	const { name, avatar, phone: contact, gender, email, address, aadhar, pan, joinedDate, hsn } = req.body;
 	const carsData = req.body.cars; // Extract cars data from request body
 
 	if ([name, email, contact, gender, pan].some((field) => field === "")) {
@@ -26,7 +26,7 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	const owner = await Owner.create({
 		name,
 		contact,
-		gst,
+		aadhar,
 		gender,
 		email,
 		avatar,
