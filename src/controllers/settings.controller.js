@@ -49,6 +49,13 @@ exports.updateDayRate = catchAsyncErrors(async (req, res) => {
 exports.sendPdf = catchAsyncErrors(async (req, res) => {
 	const { email, invoices } = req.body;
 
+	const gst = await Setting.findOne();
+
+	const subtotal = invoices.reduce((acc, invoice) => acc + invoice.totalDayAmount, 0);
+	const gstRate = gst.gstValue;
+	const gstAmount = subtotal * gstRate;
+	const total = subtotal + gstAmount;
+
 	// Construct the HTML email body with invoice details
 	let emailBody = `
 		<h1>Bill Details 💵💸</h1>
@@ -83,11 +90,27 @@ exports.sendPdf = catchAsyncErrors(async (req, res) => {
 	});
 
 	emailBody += `
-	    </tbody>
-	</table>
- `;
-
-	emailBody += `<p>Thank you for your business.</p>`;
+            </tbody>
+        </table>
+        <br>
+        <table border="1" cellpadding="10" cellspacing="0">
+            <tbody>
+                <tr>
+                    <td>Subtotal</td>
+                    <td>${fixed(subtotal)}</td>
+                </tr>
+                <tr>
+                    <td>GST (5%)</td>
+                    <td>${fixed(gstAmount)}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>${fixed(total)}</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>Thank you for your business.</p>
+    `;
 
 	const mailSender = new MailSender(email, "Bill Details 💵💸", "Attached is your Bill Details For the month of Febuary 2024.", emailBody);
 
