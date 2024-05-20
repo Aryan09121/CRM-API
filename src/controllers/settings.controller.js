@@ -53,7 +53,7 @@ exports.sendPdf = catchAsyncErrors(async (req, res) => {
 
 	const subtotal = invoices.reduce((acc, invoice) => acc + invoice.totalDayAmount, 0);
 	const gstRate = gst.gstValue;
-	const gstAmount = subtotal * gstRate;
+	const gstAmount = (subtotal * gstRate) / 100;
 	const total = subtotal + gstAmount;
 
 	// Construct the HTML email body with invoice details
