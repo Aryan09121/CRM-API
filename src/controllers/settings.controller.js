@@ -6,6 +6,10 @@ const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const { setting: setid } = require("../constants.js");
 const MailSender = require("../utils/Nodemailer.js");
 
+const fixed = (n) => {
+	return parseFloat(Number(n).toFixed(2));
+};
+
 exports.updateGstValue = catchAsyncErrors(async (req, res) => {
 	const { gstValue } = req.body;
 
@@ -72,8 +76,8 @@ exports.sendPdf = catchAsyncErrors(async (req, res) => {
 		   <td>${invoice.count}</td>
 		   <td>${invoice.periodFrom}</td>
 		   <td>${invoice.periodTo}</td>
-		   <td>${invoice.totalDayQty}</td>
-		   <td>${invoice.totalDayAmount}</td>
+		   <td>${fixed(invoice.totalDayQty)}</td>
+		   <td>${fixed(invoice.totalDayAmount)}</td>
 	    </tr>
 	`;
 	});
