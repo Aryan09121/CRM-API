@@ -23,7 +23,7 @@ const tripSchema = new Schema(
 		},
 		year: {
 			type: Number,
-			required: true,
+			default: new Date().getFullYear(),
 		},
 		frvCode: {
 			type: String,
@@ -59,6 +59,16 @@ const tripSchema = new Schema(
 		generated: [
 			{
 				type: String,
+			},
+		],
+		months: [
+			{
+				month: Date,
+				startDate: Date,
+				endDate: Date,
+				startKm: Number,
+				endKm: Number,
+				offroad: Number,
 			},
 		],
 		status: {

@@ -151,7 +151,7 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 });
 
 exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
-	const allInvoices = await Invoice.find().populate("owner company car");
+	const allInvoices = await Invoice.find().populate("owner company");
 
 	if (!allInvoices || allInvoices.length === 0) {
 		throw new ApiError(404, "No invoices found in the database.");
@@ -160,16 +160,100 @@ exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
 	const formattedInvoices = [];
 
 	allInvoices.forEach((invoice) => {
-		formattedInvoices.push({
-			_id: invoice?._id,
-			invoiceId: invoice.invoiceId,
-			company: invoice.company,
-			owner: invoice.owner,
-			model: invoice.model,
-			months: invoice.months,
-			car: invoice.car,
+		// console.log(invoice);
+		// Check if the owner is already present in formattedInvoices
+		const companyIndex = formattedInvoices.findIndex((companyInvoices) => {
+			// console.log(companyInvoices.company);
+			// console.log("invoice =", invoice.company);
+			return companyInvoices.company?._id.toString() === invoice?.company?._id?.toString();
 		});
+
+		// If company is not present, then add the company along with the current invoice
+		if (companyIndex === -1) {
+			formattedInvoices.push({
+				company: invoice.company,
+				owner: invoice.owner,
+				invoices: [
+					{
+						model: invoice.model,
+						invoice: [
+							{
+								_id: invoice?._id,
+								invoiceId: invoice.invoiceId,
+								model: invoice.model,
+								dayQty: invoice.dayQty,
+								dayRate: invoice.dayRate,
+								dayAmount: invoice.dayAmount,
+								kmQty: invoice.kmQty,
+								offroad: invoice.offroad,
+								kmRate: invoice.kmRate,
+								kmAmount: invoice.kmAmount,
+								totalAmount: invoice.totalAmount,
+								invoiceDate: invoice.invoiceDate,
+								car: invoice.car,
+								from: invoice.from,
+								to: invoice.to,
+								status: invoice.status,
+							},
+						],
+					},
+				],
+			});
+		} else {
+			// If owner is already present, find the model index
+			const modelIndex = formattedInvoices[companyIndex].invoices.findIndex((inv) => {
+				return inv.model === invoice.model;
+			});
+
+			// If model is not present, add the model along with the current invoice
+			if (modelIndex === -1) {
+				formattedInvoices[companyIndex].invoices.push({
+					model: invoice.model,
+					invoice: [
+						{
+							_id: invoice?._id,
+							invoiceId: invoice.invoiceId,
+							model: invoice.model,
+							dayQty: invoice.dayQty,
+							dayRate: invoice.dayRate,
+							offroad: invoice.offroad,
+							dayAmount: invoice.dayAmount,
+							kmQty: invoice.kmQty,
+							kmRate: invoice.kmRate,
+							kmAmount: invoice.kmAmount,
+							totalAmount: invoice.totalAmount,
+							invoiceDate: invoice.invoiceDate,
+							car: invoice.car,
+							from: invoice.from,
+							to: invoice.to,
+							status: invoice.status,
+						},
+					],
+				});
+			} else {
+				// If model is already present, add the current invoice
+				formattedInvoices[companyIndex].invoices[modelIndex].invoice.push({
+					_id: invoice?._id,
+					invoiceId: invoice.invoiceId,
+					model: invoice.model,
+					dayQty: invoice.dayQty,
+					dayRate: invoice.dayRate,
+					dayAmount: invoice.dayAmount,
+					kmQty: invoice.kmQty,
+					kmRate: invoice.kmRate,
+					kmAmount: invoice.kmAmount,
+					offroad: invoice.offroad,
+					totalAmount: invoice.totalAmount,
+					invoiceDate: invoice.invoiceDate,
+					car: invoice.car,
+					from: invoice.from,
+					to: invoice.to,
+					status: invoice.status,
+				});
+			}
+		}
 	});
+
 	res.status(200).json(new ApiResponse(200, formattedInvoices, "All invoices retrieved successfully."));
 });
 

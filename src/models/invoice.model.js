@@ -25,11 +25,9 @@ const invoiceSchema = new Schema({
 	},
 	model: {
 		type: String,
-		required: true,
 	},
 	dayQty: {
 		type: Number,
-		required: true,
 	},
 	offroad: {
 		type: Number,
@@ -37,35 +35,27 @@ const invoiceSchema = new Schema({
 	},
 	dayRate: {
 		type: Number,
-		required: true,
 	},
 	dayAmount: {
 		type: Number,
-		required: true,
 	},
 	kmQty: {
 		type: Number,
-		required: true,
 	},
 	kmRate: {
 		type: Number,
-		required: true,
 	},
 	kmAmount: {
 		type: Number,
-		required: true,
 	},
 	totalAmount: {
 		type: Number,
-		required: true,
 	},
 	gstAmount: {
 		type: Number,
-		required: true,
 	},
 	billAmount: {
 		type: Number,
-		required: true,
 	},
 	from: {
 		type: Date,
@@ -79,6 +69,39 @@ const invoiceSchema = new Schema({
 		type: Date,
 		default: Date.now,
 	},
+	months: [
+		{
+			startDate: Date,
+			endDate: Date,
+			startKm: Number,
+			endKm: Number,
+			days: Number,
+			offroad: Number,
+			dayAmount: Number,
+			kmAmount: Number,
+			totalDays: Number,
+			totalKm: Number,
+			totalAmount: Number,
+			gstAmount: Number,
+			billAmount: Number,
+			invoiceDate: Date,
+			rate: {
+				date: Number,
+				km: Number,
+			},
+			rent: Number,
+			companyStatus: {
+				type: String,
+				enum: ["paid", "pending"],
+				default: "pending",
+			},
+			ownerStatus: {
+				type: String,
+				enum: ["paid", "pending"],
+				default: "pending",
+			},
+		},
+	],
 	status: {
 		type: String,
 		enum: ["paid", "pending", "unpaid"],

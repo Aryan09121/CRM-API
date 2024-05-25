@@ -17,41 +17,25 @@ const companySchema = new Schema(
 		},
 		email: {
 			type: String,
-			unique: [true, "email should be unique"],
-			reqired: [true, "Email is required"],
 			match: [/^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/, "Please fill a valid email address"],
 		},
 		address: {
-			street: {
-				type: String,
-				required: [true, "Street is required"],
-			},
-			city: {
-				type: String,
-				required: [true, "City is required"],
-			},
-			state: {
-				type: String,
-				required: [true, "State is required"],
-			},
-			pincode: {
-				type: String,
-				required: [true, "Pincode is required"],
-				minLength: [6, "Pincode should be  6 character long"],
-				maxLength: [6, "Pincode should be  6 character long"],
-			},
+			type: "string",
 		},
 		pan: {
 			type: String,
-			unique: [true, "gst no should be unique"],
+			unique: [true, "pan no should be unique"],
 			required: true,
 		},
 		gst: {
 			type: String,
 			unique: [true, "gst no should be unique"],
+			required: true,
 		},
 		hsn: {
 			type: String,
+			unique: [true, "hsn no should be unique"],
+			required: [true, "hsn Number should be required"],
 		},
 	},
 	{ timestamps: true }

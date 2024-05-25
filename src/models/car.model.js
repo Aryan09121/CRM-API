@@ -6,29 +6,19 @@ const carSchema = new Schema(
 		registrationNo: {
 			type: String,
 			required: true,
+			unique: [true, "Car Registration Number Should be Unique"],
 		},
 		model: {
 			type: String,
 			required: true,
 		},
 		totalkm: { type: Number, default: 0 },
+		totalDays: { type: Number, default: 0 },
+		offroad: { type: Number, default: 0 },
 		trip: [{ type: String, ref: "Trip" }],
 		brand: {
 			type: String,
 			required: true,
-		},
-		features: {
-			capacity: {
-				type: Number,
-				min: 1,
-			},
-			type: {
-				type: String,
-				enum: ["AC", "NON-AC"],
-			},
-			maxSpeed: {
-				type: Number,
-			},
 		},
 		rate: {
 			date: {
@@ -44,6 +34,10 @@ const carSchema = new Schema(
 			type: Number,
 		},
 		amount: {
+			type: Number,
+			default: 0,
+		},
+		ownerAmount: {
 			type: Number,
 			default: 0,
 		},

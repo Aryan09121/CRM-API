@@ -17,31 +17,24 @@ const ownerSchema = new Schema(
 		},
 		gender: {
 			type: String,
-			required: [true, "Gender is required"],
 			enum: ["male", "female", "others"],
 		},
 		email: {
 			type: String,
-			unique: [true, "email should be unique"],
-			reqired: [true, "Email is required"],
 			match: [/^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/, "Please fill a valid email address"],
 		},
 		address: {
 			street: {
 				type: String,
-				required: [true, "Street is required"],
 			},
 			city: {
 				type: String,
-				required: [true, "City is required"],
 			},
 			state: {
 				type: String,
-				required: [true, "State is required"],
 			},
 			pincode: {
 				type: String,
-				required: [true, "Pincode is required"],
 				minLength: [6, "Pincode should be  6 character long"],
 				maxLength: [6, "Pincode should be  6 character long"],
 			},
@@ -92,24 +85,26 @@ const ownerSchema = new Schema(
 			},
 		],
 		invoices: [{ type: Schema.Types.ObjectId, ref: "Invoice" }],
-		socials: {
-			facebook: String,
-			twiiter: String,
-			instagram: String,
-		},
 		pan: {
 			type: String,
-			unique: [true, "gst no should be unique"],
-			required: true,
 		},
 		aadhar: {
 			type: String,
-			unique: [true, "aadhar no should be unique"],
 		},
-		hsn: {
+		account: {
 			type: String,
-			// unique: [true, "pan no should be unique"],
+			unique: [true, "account no should be unique"],
 		},
+		bankName: String,
+		ifsc: {
+			type: String,
+		},
+		registration: [
+			{
+				registrationNo: String,
+				model: String,
+			},
+		],
 		joinedDate: {
 			type: Date,
 			default: Date.now, // Set the default value to the current date and time
