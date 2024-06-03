@@ -3,7 +3,7 @@ const Setting = require("../models/settings.model.js");
 const Car = require("../models/car.model.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
-const { setting: setid } = require("../constants.js");
+// const { setting: setid } = require("../constants.js");
 const MailSender = require("../utils/Nodemailer.js");
 
 const fixed = (n) => {
@@ -15,13 +15,13 @@ exports.updateGstValue = catchAsyncErrors(async (req, res) => {
 
 	// const setting = await Setting.create({ gstValue });
 
-	const setting = await Setting.findOneAndUpdate({ _id: setid }, { gstValue });
+	const setting = await Setting.findOneAndUpdate({ gstValue });
 
 	res.status(200).json(new ApiResponse(200, setting, "Gst Value updated successfully"));
 });
 
 exports.getGstValue = catchAsyncErrors(async (req, res) => {
-	const setting = await Setting.findById(setid);
+	const setting = await Setting.findOne();
 	if (!setting) {
 		throw new ApiError(404, "Setting Not Found");
 	}

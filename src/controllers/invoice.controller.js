@@ -151,7 +151,7 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 });
 
 exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
-	const allInvoices = await Invoice.find().populate("owner company car");
+	const allInvoices = await Invoice.find().populate("owner company car  months.car");
 
 	if (!allInvoices || allInvoices.length === 0) {
 		throw new ApiError(404, "No invoices found in the database.");
@@ -301,24 +301,28 @@ exports.payInvoices = catchAsyncErrors(async (req, res) => {
 	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
 });
 // ?? pay all invoices
-exports.payAllInvoices = catchAsyncErrors(async (req, res) => {
-	const { ids } = req.body; // Assuming the IDs are sent in the body as an array
+exports.payOwner = catchAsyncErrors(async (req, res) => {
+	const { ownerId, transaction, invDate } = req.body;
 
-	if (!Array.isArray(ids) || ids.length === 0) {
-		throw new ApiError(400, "No invoice IDs provided or invalid format.");
+	if (!ownerId || !transaction || !invDate) {
+		throw new ApiError(400, "All fields are required.");
 	}
+	const invDateParsed = new Date(invDate);
 
-	const invoices = await Invoice.updateMany(
-		{ _id: { $in: ids } },
-		{ $set: { status: "paid" } },
-		{ multi: true } // Ensure multiple documents are updated
+	const result = await Invoice.updateMany(
+		{
+			owner: ownerId.toString(),
+			"months.invoiceDate": invDateParsed,
+		},
+		{
+			$set: { "months.$.ownerStatus": "paid" },
+		}
 	);
 
-	if (invoices.nModified === 0) {
-		throw new ApiError(404, "No invoices found or all invoices are already paid.");
+	if (result.nModified === 0) {
+		throw new ApiError(404, "No matching invoices found or no updates made.");
 	}
-
-	res.status(200).json(new ApiResponse(200, {}, "Invoices Payment Successful"));
+	res.status(200).json(new ApiResponse(200, {}, "Bill Payment added successfully"));
 });
 
 // ?? payOwnerBill

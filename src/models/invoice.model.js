@@ -85,6 +85,12 @@ const invoiceSchema = new Schema({
 			gstAmount: Number,
 			billAmount: Number,
 			invoiceDate: Date,
+			district: String,
+			frvCode: String,
+			car: {
+				type: Schema.Types.ObjectId,
+				ref: "Car",
+			},
 			rate: {
 				date: Number,
 				km: Number,

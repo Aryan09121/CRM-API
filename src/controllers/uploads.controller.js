@@ -64,6 +64,7 @@ exports.addCars = catchAsyncErrors(async (req, res) => {
 			start: car.start,
 			rate: car.rate,
 			owner: owner._id,
+			year: car.year,
 		});
 
 		if (!cardata) {
@@ -112,7 +113,6 @@ exports.addMultipleOwner = catchAsyncErrors(async (req, res) => {
 // ??!!  invoice genration and data mixing
 exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 	const data = req.body;
-	console.log("************************************************************************************************");
 	for (const registrationNo in data.carStats) {
 		if (Object.hasOwnProperty.call(data.carStats, registrationNo)) {
 			const carStat = data.carStats[registrationNo];
@@ -202,12 +202,16 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 			if (!car) {
 				throw new ApiError(404, "Car Not Found");
 			}
+			0;
 			const owner = await Owner.findOne({ _id: car.owner });
 			if (!owner) {
 				throw new ApiError(404, "Owner Not Found");
 			}
 			const company = await Company.findById(carStat.companyId);
 			const setting = await Setting.findOne();
+			if (!setting) {
+				throw new ApiError(404, "Setting Not Found");
+			}
 			const invId = generateInvoiceId(car.model);
 			const invoice = await Invoice.create({
 				owner: owner._id,
@@ -268,6 +272,8 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 					days: trip.totalDays,
 					rate: trip.rate,
 					rent: trip.rent,
+					district: trip.district,
+					frvCode: trip.frvCode,
 					totalDays: trip.totalDays - trip.offroad,
 					dayAmount: Number((trip.totalDays * trip.rate.date).toFixed(2)),
 					kmAmount: Number((trip.totalKm * trip.rate.km).toFixed(2)),
@@ -282,6 +288,7 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 							(((trip.totalDays - trip.offroad) * trip.rate.date + trip.totalKm * trip.rate.km) * setting.gstValue) / 100
 						).toFixed(2)
 					),
+					car: car._id,
 				});
 			}
 			await invoice.save();

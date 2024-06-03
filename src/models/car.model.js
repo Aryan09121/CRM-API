@@ -12,6 +12,7 @@ const carSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		year: { type: Number, default: new Date().getFullYear() },
 		totalkm: { type: Number, default: 0 },
 		totalDays: { type: Number, default: 0 },
 		offroad: { type: Number, default: 0 },
