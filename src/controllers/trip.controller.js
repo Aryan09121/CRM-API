@@ -24,7 +24,7 @@ function generateInvoiceId(model) {
 
 // ?? get all trips
 exports.addTrip = catchAsyncErrors(async (req, res) => {
-	const { registrationNo, district, frvCode, year, start, companyId, companyName } = req.body;
+	const { registrationNo, district, frvCode, year, start, companyId } = req.body;
 
 	// Check if carId is provided
 	if (!registrationNo) {
@@ -37,11 +37,10 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 
 	let company;
 	if (!companyId) {
-		if (!companyName) {
-			throw new ApiError(404, "companyId or companyName is required.");
-		}
-
-		company = await Company.findOne({ name: companyName });
+		throw new ApiError(404, "companyId is required.");
+	}
+	if (companyId) {
+		company = await Company.findById(companyId);
 		if (!company) {
 			throw new ApiError(404, "company Not Found");
 		}
@@ -57,37 +56,45 @@ exports.addTrip = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "Car Rate is required**");
 	}
 
-	if (start.km < car.start.km) {
-		throw new ApiError(404, "start km is too low");
+	const isTripPresent = await Trip.findOne({ car: car._id, company: company._id, frvCode: frvCode });
+
+	if (isTripPresent) {
+		console.log("trip is already present");
+		isTripPresent.months.push({
+			month: new Date(start.date),
+			startDate: isTripPresent.start.date,
+			startKm: isTripPresent.start.km,
+			offroad: 0,
+		});
+		await isTripPresent.save();
+	} else {
+		// Create a new trip instance
+		const trip = new Trip({
+			car: car._id,
+			district,
+			company: company._id,
+			frvCode,
+			tripId: generateTripId(district, frvCode),
+			start: {
+				date: start.date || new Date(),
+				km: start.km || car.start.km,
+			},
+		});
+
+		if (!trip) {
+			throw new ApiError(404, "Internal server error while creating a trip");
+		}
+		trip.months.push({
+			month: new Date(start.date),
+			startDate: trip.start.date,
+			startKm: trip.start.km,
+			offroad: 0,
+		});
+		car.trip.push(trip._id);
+		await car.save();
+		await trip.save();
+		res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 	}
-	// if (Object.keys(start.km).length !== 0 || (Object.keys(start.date).length !== 0 && start.km < car.start.km)) {
-	// 	throw new ApiError(404, "start km is too low");
-	// }
-
-	// Create a new trip instance
-	const trip = new Trip({
-		car: car._id,
-		district,
-		year: year || new Date().getFullYear(),
-		company: companyId ? companyId : company._id,
-		frvCode,
-		start: {
-			date: start.date || new Date(),
-			km: start.km || car.start.km,
-		},
-	});
-
-	if (!trip) {
-		throw new ApiError(404, "Internal server error while creating a trip");
-	}
-
-	const id = generateTripId(trip.district, trip.frvCode);
-
-	trip.tripId = id;
-	car.trip.push(trip._id);
-	await car.save();
-	await trip.save();
-	res.status(201).json(new ApiResponse(200, trip, "Trip added successfully."));
 });
 
 // TODO: Need to modify some correction like date issue
@@ -112,9 +119,11 @@ exports.updateOffroad = catchAsyncErrors(async (req, res) => {
 			if (!trip.offroad_date.includes(date.toString())) {
 				trip.offroad_date.push(date);
 				trip.offroad++;
+				trip.months[trip.months.length - 1].offroad++;
 			}
 		}
 	}
+	trip.months[trip.offroad_date.length];
 	await trip.save();
 
 	// const invoice = await Invoice.findOne({ trip: trip._id.toString() });
@@ -257,6 +266,16 @@ exports.completeTrip = catchAsyncErrors(async (req, res) => {
 // ?? get all trips
 exports.getAllTrips = catchAsyncErrors(async (req, res) => {
 	const trips = await Trip.find().populate("car");
+	// console.log(trips);
+
+	if (!trips || trips.length === 0) {
+		res.status(201).json(new ApiResponse(200, [], "no trips found."));
+	}
+	res.status(201).json(new ApiResponse(200, trips, "Trips fetched Successfully."));
+});
+
+exports.getTripByCarId = catchAsyncErrors(async (req, res) => {
+	const trips = await Trip.find({ car: req?.query?.id }).populate("car");
 	// console.log(trips);
 
 	if (!trips || trips.length === 0) {

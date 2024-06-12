@@ -17,7 +17,7 @@ const invoiceSchema = new Schema({
 	},
 	trip: {
 		type: Schema.Types.ObjectId,
-		ref: "Trip",
+		ref: "trip",
 	},
 	car: {
 		type: Schema.Types.ObjectId,

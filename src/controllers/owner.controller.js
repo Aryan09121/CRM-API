@@ -1,12 +1,9 @@
 const { ApiError } = require("../utils/ApiError.js");
 const Owner = require("../models/owner.model");
 const Car = require("../models/car.model.js");
-// const { uploadOnCloudinary } = require("../utils/cloudinary.js");
-const multer = require("multer");
 const { ApiResponse } = require("../utils/ApiResponse.js");
 const { catchAsyncErrors } = require("../middlewares/catchAsyncErrors.js");
 const path = require("path");
-// const imagekit = require("../utils/imagekit.js").initImageKit();
 
 // ?? Add New Owner Handler
 exports.addNewOwner = catchAsyncErrors(async (req, res) => {
@@ -47,6 +44,53 @@ exports.addNewOwner = catchAsyncErrors(async (req, res) => {
 	}
 
 	return res.status(200).json(new ApiResponse(200, populatedOwner, "Owner Added Successfully"));
+});
+
+exports.updateOwner = catchAsyncErrors(async (req, res) => {
+	const { contact, email, address, pan, aadhar, accountNo, ifsc, bankName, accountHolderName } = req.body;
+
+	const owner = await Owner.findById(req.query.id);
+
+	if (!owner) {
+		throw new ApiError(409, "owner not found!");
+	}
+
+	if (contact) {
+		owner.contact = contact;
+	}
+
+	if (email) {
+		owner.email = email;
+	}
+
+	if (address && address.street && address.city && address.state && address.pincode) {
+		owner.address.street = address.street;
+		owner.address.city = address.city;
+		owner.address.state = address.state;
+		owner.address.pincode = address.pincode;
+	}
+	if (accountNo) {
+		owner.account = accountNo;
+	}
+	if (accountHolderName) {
+		owner.accountHolderName = accountHolderName;
+	}
+	if (aadhar) {
+		owner.aadhar = aadhar;
+	}
+	if (pan) {
+		owner.pan = pan;
+	}
+	if (ifsc) {
+		owner.ifsc = ifsc;
+	}
+	if (bankName) {
+		owner.bankName = bankName;
+	}
+
+	await owner.save();
+
+	return res.status(200).json(new ApiResponse(200, {}, "Owner Updated	 Successfully"));
 });
 
 // ?? Get Single Owner Handler
@@ -132,39 +176,6 @@ exports.updateOwnerDetails = catchAsyncErrors(async (req, res) => {
 
 	res.status(201).json(new ApiResponse(201, updatedOwner, "Owner updated successfully"));
 });
-
-// ?? Post Owners Avatar
-// exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
-// 	try {
-// 		console.log(req)
-// 		const modifiedFileName = `resumebuilder=${Date.now}${path.extname(req.file.name)}`;
-// 		const result = await imagekit.upload({
-// 			file: req.file.path, // path to the uploaded file
-// 			fileName: modifiedFileName, // original file name
-// 		});
-// 		res.status(200).json({ success: true, message: "Profile Updated", });
-// 	} catch (error) {
-// 		console.error(error);
-// 		res.status(500).send('Error uploading image to ImageKit');
-// 	}
-// 	// const file = req.files.avatar;
-// 	// const file = req.body.avatar
-
-// 	// if (student.avatar.fileId !== "") {
-// 	//     await imagekit.deleteFile(student.avatar.fileId)
-// 	// }
-
-// 	// const { fileId, url } = await imagekit.upload({
-// 	//     file: file.data, fileName: modifiedFileName,
-// 	// })
-
-// 	// student.avatar = { fileId, url };
-// 	// await student.save()
-// 	// res.status(200).json({
-// 	//     success: true,
-// 	//     message: "Profile Updated",
-// 	// });
-// })
 
 exports.onwerAvatar = catchAsyncErrors(async (req, res, next) => {
 	try {

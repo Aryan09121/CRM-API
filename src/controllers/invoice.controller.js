@@ -2,6 +2,7 @@ const Invoice = require("../models/invoice.model.js");
 const Car = require("../models/car.model");
 const Trip = require("../models/trip.model");
 const Setting = require("../models/settings.model");
+const Company = require("../models/company.model");
 const Owner = require("../models/owner.model");
 const { ApiError } = require("../utils/ApiError.js");
 const { ApiResponse } = require("../utils/ApiResponse.js");
@@ -24,19 +25,41 @@ function generateInvoiceId(model) {
 exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 	const { tripId, status, end } = req.body;
 	const trip = await Trip.findOne({ tripId }).populate("car");
-
 	if (!trip) {
 		throw new ApiError(404, "Trip not found");
 	}
+
+	const car = await Car.findById(trip.car._id);
+	if (!car) {
+		throw new ApiError(404, "car not found");
+	}
+
+	const owner = await Owner.findById(car.owner);
+	if (!owner) {
+		throw new ApiError(404, "owner not found");
+	}
+
+	const company = await Company.findById(trip.company);
+	if (!company) {
+		throw new ApiError(404, "owner not found");
+	}
+	const setting = await Setting.findOne();
+	if (!setting) {
+		throw new ApiError(404, "Setting Not Found");
+	}
+
+	const invId = generateInvoiceId(car.model);
+
 	if (trip.status === "completed") {
 		throw new ApiError(404, "Trip already completed");
 	}
+
 	if (trip.generated.includes(new Date().toISOString().split("T")[0])) {
-		// console.log("hellow");
-		throw new ApiError(403, "Invoice already generated for today");
+		throw new ApiError(403, "Invoice already generated for this trip");
 	}
+
 	if (trip.start.km > end.km) {
-		throw new ApiError(401, "end km is not greater than start km");
+		throw new ApiError(401, "end km must be greater than start km");
 	}
 
 	trip.end = {
@@ -44,110 +67,129 @@ exports.generateInvoice = catchAsyncErrors(async (req, res) => {
 		km: end.km,
 	};
 
+	trip.months[trip.months.length - 1].endDate = end.date || new Date();
+	trip.months[trip.months.length - 1].endKm = end.km;
+
 	await trip.save();
-	const gst = await Setting.findOne();
+
 	const dayqty = Math.ceil((trip.end.date - trip.start.date) / (1000 * 60 * 60 * 24)) + 1;
 	const kmqty = Math.ceil(trip.end.km - trip.start.km);
 
-	const dayAmount = (dayqty - trip.offroad) * trip.car.rate.date;
-	const kmAmount = kmqty * trip.car.rate.km;
+	const dayAmount = Number(((dayqty - trip.months[trip.months.length - 1].offroad) * car.rate.date).toFixed(2));
+	const kmAmount = Number((kmqty * trip.car.rate.km).toFixed(2));
 
 	const total = dayAmount + kmAmount;
-	const gstTotal = (total * gst.gstValue) / 100;
-	const billTotal = (gstTotal + total).toFixed(2);
+	const gstTotal = Number(((total * setting.gstValue) / 100).toFixed(2));
+	const billTotal = Number((gstTotal + total).toFixed(2));
 
-	const invoiceId = generateInvoiceId(trip.car.model);
+	const isInvoicePresent = await Invoice.findOne({ trip: trip._id });
 
-	const invoice = await Invoice.create({
-		owner: trip.car.owner,
-		company: trip.company,
-		trip: trip._id.toString(),
-		invoiceId,
-		car: trip.car._id,
-		model: trip.car.model,
-		dayQty: dayqty,
-		dayRate: trip.car.rate.date,
-		dayAmount: dayAmount.toFixed(2),
-		kmQty: kmqty,
-		kmRate: trip.car.rate.km,
-		from: trip.start.date,
-		fromkm: trip.start.km,
-		tokm: end.km,
-		to: end.date,
-		kmAmount: kmAmount.toFixed(2),
-		totalAmount: total.toFixed(2),
-		offroad: trip.offroad,
-		gstAmount: gstTotal.toFixed(2),
-		billAmount: billTotal,
-	});
+	if (isInvoicePresent) {
+		isTripPresent;
+		isTripPresent.dayQty += dayQty;
+		isTripPresent.kmQty += kmqty;
+		isTripPresent.offroad += trip.months[trip.months.length - 1].offroad;
+		isTripPresent.dayAmount += dayAmount;
+		isTripPresent.kmAmount += kmAmount;
+		isTripPresent.totalAmount += total;
+		isTripPresent.gstAmount += gstTotal.toFixed(2);
+		isTripPresent.billAmount += billTotal;
 
-	const owner = await Owner.findById(trip.car.owner);
-
-	if (!owner) {
-	} else {
-		owner.invoices.push(invoice._id);
-
-		const inv = {
-			start: invoice.from,
-			end: invoice.to,
-			car: invoice.car,
-			rent: trip.car.rent,
+		isTripPresent.months.push({
+			startDate: trip.start.date,
+			endDate: end.date,
+			startKm: trip.start.km,
+			endKm: end.km,
 			offroad: invoice.offroad,
-			days: dayqty,
-			amount: dayqty * trip.car.rent,
-			invoiceDate: invoice.invoiceDate,
-			_id: invoice._id,
-		};
+			invoiceDate: end.date || new Date(),
+			days: invoice.dayQty + invoice.offroad,
+			rate: {
+				date: invoice.dayRate,
+				km: invoice.kmRate,
+			},
+			rent: car.rent,
+			district: trip.district,
+			frvCode: trip.frvCode,
+			totalDays: invoice.dayQty,
+			dayAmount: dayAmount,
+			kmAmount: kmAmount,
+			totalAmount: total,
+			gstAmount: gstTotal.toFixed(2),
+			billAmount: billTotal,
+			car: car._id,
+		});
+		trip.generated.push(new Date().toISOString().split("T")[0]);
 
-		// Check if bills array is empty
-		if (owner.bills.length === 0) {
-			owner.bills.push({ model: trip.car.model, invoices: [] });
+		if (status === false) {
+			trip.status = "completed";
+			trip.offroad = 0;
+			car.trip.pull(trip._id);
 		}
+		await isTripPresent.save();
+		await car.save();
+		await trip.save();
 
-		let billFound = false;
-		// Iterate through bills array
-		for (let i = 0; i < owner.bills.length; i++) {
-			if (owner.bills[i].model === invoice.model) {
-				owner.bills[i].invoices.push(inv);
-				billFound = true;
-				break; // No need to continue the loop once the bill is found and updated
-			}
-		}
-
-		// If bill with model not found, create a new one
-		if (!billFound) {
-			owner.bills.push({ model: trip.car.model, invoices: [inv] });
-		}
-
-		await owner.save();
-	}
-
-	trip.generated.push(new Date().toISOString().split("T")[0]);
-
-	const car = await Car.findById(trip.car);
-	car.amount += Number(total);
-	car.totalkm = kmqty + car.start.km;
-	car.dayAmount += Number(dayAmount);
-	car.kmAmount += Number(kmAmount);
-	if (status === false) {
-		trip.status = "completed";
-		trip.start = {
-			date: trip.end.date,
-			km: trip.end.km,
-		};
-		trip.offroad = 0;
-		car.trip.pull(trip._id);
+		res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));
 	} else {
-		trip.start = {
-			date: trip.end.date,
-			km: trip.end.km,
-		};
-		trip.offroad = 0;
-	}
-	await car.save();
-	await trip.save();
+		const invoice = await Invoice.create({
+			owner: owner._id,
+			car: car._id,
+			company: company._id,
+			trip: trip._id,
+			invoiceId: invId,
+			model: car.model,
+			dayQty: dayqty,
+			kmQty: kmqty,
+			dayRate: car.rate.date,
+			kmRate: car.rate.km,
+			dayAmount: dayAmount,
+			kmAmount: kmAmount,
+			totalAmount: total,
+			gstAmount: gstTotal.toFixed(2),
+			billAmount: billTotal,
+			offroad: trip.months[trip.months.length - 1].offroad,
+		});
 
-	res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));
+		invoice.months.push({
+			startDate: trip.start.date,
+			endDate: end.date,
+			startKm: trip.start.km,
+			endKm: end.km,
+			offroad: invoice.offroad,
+			invoiceDate: end.date || new Date(),
+			days: invoice.dayQty + invoice.offroad,
+			rate: {
+				date: invoice.dayRate,
+				km: invoice.kmRate,
+			},
+			rent: car.rent,
+			district: trip.district,
+			frvCode: trip.frvCode,
+			totalDays: invoice.dayQty,
+			dayAmount: dayAmount,
+			kmAmount: kmAmount,
+			totalAmount: total,
+			gstAmount: gstTotal.toFixed(2),
+			billAmount: billTotal,
+			car: car._id,
+		});
+
+		owner.invoices.push(invoice._id);
+		await invoice.save();
+		await owner.save();
+
+		trip.generated.push(new Date().toISOString().split("T")[0]);
+
+		if (status === false) {
+			trip.status = "completed";
+			trip.offroad = 0;
+			car.trip.pull(trip._id);
+		}
+		await car.save();
+		await trip.save();
+
+		res.status(201).json(new ApiResponse(200, invoice, "Invoice generated successfully."));
+	}
 });
 
 exports.getAllInvoices = catchAsyncErrors(async (req, res) => {
@@ -288,17 +330,24 @@ exports.getVendorsInvoices = catchAsyncErrors(async (req, res) => {
 });
 
 exports.payInvoices = catchAsyncErrors(async (req, res) => {
-	const { id } = req.query;
-	const invoice = await Invoice.findById(id).populate("owner");
-
+	const { invoiceId, month: invDate } = req.body;
+	console.log("****************************");
+	const invoice = await Invoice.findById(invoiceId).populate("owner");
 	if (!invoice) {
 		throw new ApiError(404, "invoice not found in the database.");
 	}
+	const invDateParsed = new Date(invDate);
+	console.log(invoice.months[0].invoiceDate.toString() == invDateParsed.toString());
 
-	invoice.status = "paid";
+	for (const month of invoice.months) {
+		if (month.invoiceDate.toString() == invDateParsed.toString()) {
+			month.companyStatus = "paid";
+		}
+	}
+
 	await invoice.save();
 
-	res.status(200).json(new ApiResponse(200, invoice, "Invoice Payment Successful"));
+	res.status(200).json(new ApiResponse(200, invoice, "Payment Successful"));
 });
 // ?? pay all invoices
 exports.payOwner = catchAsyncErrors(async (req, res) => {
@@ -323,38 +372,6 @@ exports.payOwner = catchAsyncErrors(async (req, res) => {
 		throw new ApiError(404, "No matching invoices found or no updates made.");
 	}
 	res.status(200).json(new ApiResponse(200, {}, "Bill Payment added successfully"));
-});
-
-// ?? payOwnerBill
-exports.payOwnerBill = catchAsyncErrors(async (req, res) => {
-	const { transaction } = req.body;
-	const { id } = req.query;
-	const owner = await Owner.findById(id);
-
-	if (!owner) {
-		throw new ApiError(404, "Owner not found in the database.");
-	}
-
-	if (owner.bills.length === 0) {
-		throw new ApiError(404, "No bills to pay.");
-	}
-
-	// let arr = [];
-	// Loop through each bill and push it individually into the paid array
-	// owner.bills.forEach((bill) => {
-	// 	console.log(bill);
-	// 	arr.push(bill);
-	// });
-
-	// console.log(arr);
-	owner.paid.push({ transaction, bills: owner.bills });
-
-	// Clear the bills array
-	owner.bills = [];
-
-	await owner.save();
-
-	res.status(200).json(new ApiResponse(200, {}, "Owner Payment Successful"));
 });
 
 exports.getSingleInvoice = catchAsyncErrors(async (req, res) => {

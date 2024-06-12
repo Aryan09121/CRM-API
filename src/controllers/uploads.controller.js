@@ -146,7 +146,7 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 				if (!company) {
 					throw new ApiError(404, "Company Not Found");
 				}
-				const isTripPresent = await Trip.findOne({ car: car._id, company: company._id });
+				const isTripPresent = await Trip.findOne({ car: car._id, company: company._id, frvCode: trip.frvCode });
 				if (isTripPresent) {
 					console.log("trip is already present");
 					isTripPresent.months.push({
@@ -207,6 +207,7 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 			if (!owner) {
 				throw new ApiError(404, "Owner Not Found");
 			}
+
 			const company = await Company.findById(carStat.companyId);
 			const setting = await Setting.findOne();
 			if (!setting) {
@@ -231,7 +232,13 @@ exports.handleTripsInvoices = catchAsyncErrors(async (req, res) => {
 			invoice.billAmount = 0;
 
 			for (const trip of carStat.trips) {
+				const prevTrip = await Trip.findOne({ frvCode: trip.frvCode });
+				if (!prevTrip) {
+					throw new ApiError(404, "Trip Not Found");
+				}
+
 				invoice.model = trip.model;
+				invoice.trip = prevTrip._id;
 				invoice.dayQty += Number(trip.totalDays) || 0;
 				invoice.kmQty += Number(trip.totalKm) || 0;
 				invoice.offroad += trip.offroad || 0;

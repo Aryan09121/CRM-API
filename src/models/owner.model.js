@@ -35,8 +35,6 @@ const ownerSchema = new Schema(
 			},
 			pincode: {
 				type: String,
-				minLength: [6, "Pincode should be  6 character long"],
-				maxLength: [6, "Pincode should be  6 character long"],
 			},
 		},
 		bills: [
@@ -89,6 +87,9 @@ const ownerSchema = new Schema(
 			type: String,
 		},
 		aadhar: {
+			type: String,
+		},
+		accountHolderName: {
 			type: String,
 		},
 		account: {
